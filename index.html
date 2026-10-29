@@ -821,8 +821,11 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   function regBadge(x) { var n = doneCount(x); return n === 5 ? badge("success", "5/5 완료", "circle-check") : '<span class="ad-badge ad-badge--warning" title="미등록: ' + LANGS.filter(function (l) { return !langDone(x, l.k); }).map(function (l) { return l.n; }).join(", ") + '">' + ic("circle-dashed") + n + "/5 미완료</span>"; }
   function visionBadge(x) { return x.vision ? badge("success", "비전AI 인식 대상", "scan-eye") : badge("", "비전AI 인식 대상 아님", "scan"); }
   function pubBadge(p) { return p === "공개" ? badge("info", "공개", "eye") : badge("", "비공개", "eye-off"); }
+  var REASON_BUSY = "다른 재색인이 실행 중이라 챗봇 서비스가 요청을 거부했습니다.";
   var RAG = { status: "최신", lastOk: ago(60 * 20), lastResult: "성공", runs: [] };
-  (function () { var r = seeded(77); for (var k = 0; k < 19; k++) { var st = ago(60 * 20 + k * 60 * 31 + r() * 300), fail = k === 3 || k === 11; RAG.runs.push({ id: "run-" + ymd(st).replace(/-/g, "") + "-" + pad(st.getHours()) + pad(st.getMinutes()), at: st, by: k % 3 ? "content01" : "content02", scope: "전체", result: fail ? "실패" : "성공", end: new Date(st.getTime() + (fail ? 4 : 9 + r() * 6) * 60e3), reason: fail ? "챗봇 서비스 색인 작업이 시간 안에 끝나지 않았습니다." : "" }); } })();
+  (function () { var r = seeded(77); for (var k = 0; k < 19; k++) { var st = ago(60 * 20 + k * 60 * 31 + r() * 300), fail = k === 3 || k === 11, busy = k === 7, lost = k === 15; RAG.runs.push({ id: "run-" + ymd(st).replace(/-/g, "") + "-" + pad(st.getHours()) + pad(st.getMinutes()), at: st, by: k % 3 ? "content01" : "content02", scope: "전체", result: busy ? "거부(실행 중)" : lost ? "전달 실패" : fail ? "실패" : "성공", end: busy || lost ? null : new Date(st.getTime() + (fail ? 4 : 9 + r() * 6) * 60e3), reason: busy ? REASON_BUSY : lost ? "챗봇 서비스에 연결하지 못해 재색인 요청을 전달하지 못했습니다." : fail ? "챗봇 서비스 색인 작업이 시간 안에 끝나지 않았습니다." : "" }); } })();
+  // 재색인 실행이력 결과(14M SCR-M07): 실행 중·성공·실패·전달 실패·거부(실행 중)
+  function runBadge(s) { return { "실행 중": badge("info", "실행 중", "loader-circle"), "성공": badge("success", "성공"), "실패": badge("danger", "실패"), "전달 실패": badge("danger", "전달 실패", "unplug"), "거부(실행 중)": badge("warning", "거부(실행 중)", "ban") }[s]; }
   function ragBadge(s) { return { "최신": badge("success", "최신", "circle-check"), "재색인 필요": badge("warning", "재색인 필요", "refresh-cw"), "색인 중": badge("info", "색인 중", "loader-circle"), "실패": badge("danger", "실패", "circle-x"), "미색인": badge("", "미색인", "circle-dashed") }[s]; }
   var CHANGE_TYPES = ["신규 등록", "기본정보 수정", "다국어 콘텐츠 수정", "이미지·미디어 수정", "공개상태 변경"];
   var CHANGES = [];
@@ -971,7 +974,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
         (ro ? '<p class="ad-help">' + ic("lock") + " A3는 공개상태를 바꿀 수 없습니다.</p>" : "") + "</div></section>" +
         '<section class="ad-panel"><div class="ad-panel__head"><h2>RAG 상태</h2>' + ragBadge(isNew && !S.justCreated ? "미색인" : RAG.status) + '</div><div class="ad-panel__body stack"><dl class="ad-dl"><dt>현재 상태</dt><dd>' + (isNew && !S.justCreated ? "미색인" : RAG.status) + '</dd><dt>최근 색인</dt><dd class="mono">' + dt(RAG.lastOk) + "</dd><dt>최근 결과</dt><dd>" + RAG.lastResult + "</dd></dl>" +
         '<div class="ad-notice' + (RAG.status === "재색인 필요" ? " ad-notice--warning" : "") + '">' + ic(RAG.status === "재색인 필요" ? "triangle-alert" : "info") + "<span>" + (RAG.status === "재색인 필요" ? "저장한 내용이 챗봇 답변에 반영되려면 재색인을 실행해야 합니다. 재색인은 전시물 하나가 아니라 전체 RAG 데이터를 다시 색인합니다." : RAG.status === "색인 중" ? "전체 재색인이 진행 중입니다. 끝나면 상태가 최신 또는 실패로 바뀝니다." : "재색인은 전체 RAG 데이터를 대상으로 실행합니다. 자동으로 실행되지 않습니다.") + "</span></div>" +
-        (ro ? "" : '<div><button class="ad-btn ad-btn--primary" type="button" data-do="m04reindex"' + (ragOn && !isNew ? "" : " disabled") + ">" + ic("database") + '재색인 실행</button><span class="ad-help btn-help">' + (isNew ? "신규 전시물은 먼저 저장해야 합니다." : RAG.status === "최신" ? "상태가 최신이라 실행할 필요가 없습니다." : RAG.status === "색인 중" ? "색인이 끝날 때까지 다시 실행할 수 없습니다." : "") + "</span></div>") + "</div></section></div>";
+        (ro ? "" : '<div><button class="ad-btn ad-btn--primary" type="button" data-do="m04reindex"' + (ragOn && !isNew ? "" : " disabled") + ">" + ic("database") + '재색인 실행</button><button class="ad-btn ad-btn--ghost ad-btn--sm" type="button" data-do="busyDemo" aria-pressed="' + !!state.busyDemo + '">' + ic("flask-conical") + (state.busyDemo ? "거부 예시 끄기" : "실행 중 거부 예시") + '</button><span class="ad-help btn-help">' + (isNew ? "신규 전시물은 먼저 저장해야 합니다." : RAG.status === "최신" ? "상태가 최신이라 실행할 필요가 없습니다." : RAG.status === "색인 중" ? "색인이 끝날 때까지 다시 실행할 수 없습니다." : "") + "</span></div>") + "</div></section></div>";
     }
     var foot = isNew ? "" : '<div class="edit-foot"><span class="ad-stamp">' + ic("clock") + "최종 수정 " + dt(byId(x.id).updated) + " · " + NAME(byId(x.id).by) + '</span><button class="ad-btn ad-btn--ghost" type="button" data-do="m05for" data-arg="' + x.id + '">' + ic("history") + "변경이력 보기</button></div>";
     return head + flash("m04") + (S.dirty ? '<div class="ad-notice">' + ic("pencil") + "<span>저장하지 않은 변경이 있습니다.</span></div>" : "") + '<div class="ad-tabs" role="tablist" aria-label="전시물 정보">' + tabs.map(function (t) { return '<button class="ad-tab" type="button" role="tab" aria-selected="' + (S.tab === t[0]) + '" data-do="m04tab" data-arg="' + t[0] + '">' + t[1] + "</button>"; }).join("") + '</div><div class="tab-body">' + body + "</div>" + foot;
@@ -1014,6 +1017,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     setFlash("m04", (S.mode === "new" ? "전시물을 등록했습니다. 공개상태는 비공개이며, 콘텐츠를 채운 뒤 공개할 수 있습니다." : "저장했습니다.") + (RAG.status === "재색인 필요" ? " RAG 상태가 재색인 필요로 바뀌었습니다." : ""));
     render();
   };
+  DO.busyDemo = function () { state.busyDemo = !state.busyDemo; render(); };
   DO.m04reindex = function () { state.modal = { kind: "reindex" }; render(); };
   DO.m05for = function (id) { state.m05 = { q: id, type: "", by: "", from: "", to: "", page: 1, searched: true }; go("m05"); };
   MODALS.reindex = function () {
@@ -1025,7 +1029,15 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   DO.modalClose = function () { state.modal = null; render(); };
   DO.discardGo = function () { var to = state.pendingGo || "m03"; state.pendingGo = null; state.modal = null; state.m04 = null; go(to); };
   DO.reindexRun = function () {
-    state.modal = null; var st = now(), run = { id: "run-" + ymd(st).replace(/-/g, "") + "-" + pad(st.getHours()) + pad(st.getMinutes()) + pad(st.getSeconds()), at: st, by: me(), scope: "전체", result: "진행 중", end: null, reason: "" };
+    state.modal = null; var st = now(), run = { id: "run-" + ymd(st).replace(/-/g, "") + "-" + pad(st.getHours()) + pad(st.getMinutes()) + pad(st.getSeconds()), at: st, by: me(), scope: "전체", result: "실행 중", end: null, reason: "" };
+    // 업체 쪽에서 이미 재색인이 실행 중이면 거부된다. 실패로 보지 않고 RAG 상태는 "색인 중"으로 표시한다(18M)
+    if (state.busyDemo) {
+      state.busyDemo = false; run.result = "거부(실행 중)"; run.reason = REASON_BUSY;
+      RAG.runs.unshift(run); RAG.status = "색인 중"; audit("RAG", "재색인 실행", "전체 RAG 색인", "RAG 상태", "재색인 필요", "색인 중", run.id, "거부(실행 중)");
+      setFlash("m04", "이미 재색인이 진행 중입니다. 완료 후 결과를 확인해 주세요.", "warning"); render();
+      setTimeout(function () { RAG.status = "최신"; RAG.lastOk = now(); RAG.lastResult = "성공"; if (state.m04) state.m04.justCreated = false; if (state.screen === "m04" || state.screen === "m07") { setFlash(state.screen, "진행 중이던 재색인이 끝났습니다. RAG 상태가 최신으로 바뀌었습니다."); render(); } }, 6000);
+      return;
+    }
     RAG.runs.unshift(run); RAG.status = "색인 중"; audit("RAG", "재색인 실행", "전체 RAG 색인", "RAG 상태", "재색인 필요", "색인 중", run.id);
     setFlash("m04", "전체 재색인을 요청했습니다. 진행 결과는 챗봇·RAG 현황의 재색인 실행이력에서도 확인할 수 있습니다."); render();
     setTimeout(function () { run.result = "성공"; run.end = now(); RAG.status = "최신"; RAG.lastOk = run.end; RAG.lastResult = "성공"; if (state.m04) state.m04.justCreated = false; if (state.screen === "m04" || state.screen === "m07") { setFlash(state.screen, "전체 재색인이 끝났습니다. RAG 상태가 최신으로 바뀌었습니다."); render(); } }, 6000);
@@ -1093,7 +1105,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     var sum = ex.reduce(function (a, b) { return a + b.c; }, 0); ex.forEach(function (e) { e.v = Math.round(qs * e.c / sum); }); ex.sort(function (a, b) { return b.v - a.v; });
     var ragNA = state.ragNA;
     var ragPanel = ragNA ? '<div class="ad-panel__body"><div class="ad-notice ad-notice--danger" role="alert">' + ic("circle-x") + "<span><strong>RAG 색인 현황을 불러오지 못했습니다.</strong> 챗봇 서비스 상태를 확인한 뒤 새로고침해 주십시오.</span></div><dl class=\"ad-dl\"><dt>현재 상태</dt><dd>" + badge("", "조회 불가", "circle-help") + "</dd><dt>최근 성공 색인</dt><dd>조회 불가</dd><dt>최근 실행결과</dt><dd>조회 불가</dd><dt>재색인 필요</dt><dd>조회 불가</dd></dl></div>"
-      : '<div class="ad-panel__body"><dl class="ad-dl"><dt>현재 상태</dt><dd>' + ragBadge(RAG.status) + '</dd><dt>최근 성공 색인</dt><dd class="mono">' + dt(RAG.lastOk) + "</dd><dt>최근 실행결과</dt><dd>" + (RAG.runs[0].result === "진행 중" ? badge("info", "진행 중", "loader-circle") : RAG.runs[0].result === "성공" ? badge("success", "성공") : badge("danger", "실패")) + "</dd><dt>재색인 필요</dt><dd>" + (RAG.status === "재색인 필요" ? badge("warning", "필요", "refresh-cw") : "없음") + '</dd></dl><p class="ad-help">재색인 실행은 전시물 상세의 운영·RAG 탭에서 콘텐츠관리자(A2)가 합니다.</p></div>';
+      : '<div class="ad-panel__body"><dl class="ad-dl"><dt>현재 상태</dt><dd>' + ragBadge(RAG.status) + '</dd><dt>최근 성공 색인</dt><dd class="mono">' + dt(RAG.lastOk) + "</dd><dt>최근 실행결과</dt><dd>" + runBadge(RAG.runs.filter(function (r) { return r.result !== "거부(실행 중)"; })[0].result) + "</dd><dt>재색인 필요</dt><dd>" + (RAG.status === "재색인 필요" ? badge("warning", "필요", "refresh-cw") : "없음") + '</dd></dl><p class="ad-help">재색인 실행은 전시물 상세의 운영·RAG 탭에서 콘텐츠관리자(A2)가 합니다.</p></div>';
     var runs = RAG.runs.slice(0, 20);
     return pageHead("챗봇·RAG 현황", "챗봇 질문·응답 현황과 RAG 색인 운영현황. 질문·답변 원문은 제공하지 않습니다", '<button class="ad-btn ad-btn--ghost ad-btn--sm" type="button" data-do="ragNA">' + ic("flask-conical") + (ragNA ? "정상 조회 예시 보기" : "조회 불가 예시 보기") + "</button>") + flash("m07") + periodHtml(tooLongNote()) +
       '<div class="ad-kpis">' + kpi("챗봇 이용 세션", fmt(sessions), "", "질문을 1건 이상 보낸 세션") + kpi("질문 요청", fmt(qs), "건", "답변 요청 기준 · 음성 인식 실패 제외") + kpi("정상 응답", fmt(ok), "건", "근거 부족 안내 포함") + kpi("응답 성공률", (100 * ok / qs).toFixed(1), "%", "정상 응답 ÷ 질문 요청") + "</div>" +
@@ -1102,12 +1114,12 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       '<section class="ad-panel"><div class="ad-panel__head"><div><h2>전시물별 질문현황</h2><p>요청에 연결된 전시물 ID 기준</p></div><span class="ad-stamp">기본 정렬 질문 건수 내림차순</span></div><div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>전시물</th><th class="num" aria-sort="descending">질문 건수' + ic("arrow-down") + '</th><th class="num">비율</th></tr></thead><tbody>' + ex.map(function (e) { return "<tr><td>" + (e.id ? '<span class="cell-strong">' + e.n + '</span><span class="cell-sub mono">' + e.id + "</span>" : '<span class="muted">' + e.n + "</span>") + '</td><td class="num">' + fmt(e.v) + '</td><td class="num">' + (100 * e.v / qs).toFixed(1) + "%</td></tr>"; }).join("") + "</tbody></table></div></section></div>" +
       '<div class="split rev"><section class="ad-panel"><div class="ad-panel__head"><h2>RAG 색인 운영현황</h2></div>' + ragPanel + "</section>" +
       '<section class="ad-panel"><div class="ad-panel__head"><div><h2>최근 재색인 실행이력</h2><p>최근 20건</p></div></div><div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>실행일시</th><th>실행자</th><th>범위</th><th>결과</th><th>종료일시</th><th class="num">상세</th></tr></thead><tbody>' +
-      runs.map(function (r, k) { return '<tr class="is-link" tabindex="0" data-do="drawer" data-arg="run:' + k + '"><td class="mono">' + dt(r.at) + "</td><td>" + NAME(r.by) + "</td><td>" + r.scope + "</td><td>" + (r.result === "성공" ? badge("success", "성공") : r.result === "실패" ? badge("danger", "실패") : badge("info", "진행 중", "loader-circle")) + '</td><td class="mono">' + (r.end ? dt(r.end) : "—") + '</td><td class="num"><button class="ad-btn ad-btn--sm" type="button" data-do="drawer" data-arg="run:' + k + '">보기</button></td></tr>'; }).join("") + "</tbody></table></div></section></div>";
+      runs.map(function (r, k) { return '<tr class="is-link" tabindex="0" data-do="drawer" data-arg="run:' + k + '"><td class="mono">' + dt(r.at) + "</td><td>" + NAME(r.by) + "</td><td>" + r.scope + "</td><td>" + runBadge(r.result) + '</td><td class="mono">' + (r.end ? dt(r.end) : "—") + '</td><td class="num"><button class="ad-btn ad-btn--sm" type="button" data-do="drawer" data-arg="run:' + k + '">보기</button></td></tr>'; }).join("") + "</tbody></table></div></section></div>";
   };
   DO.ragNA = function () { state.ragNA = !state.ragNA; render(); };
   DRAWERS.run = function (d) {
     var r = RAG.runs[d.k]; if (!r) return "";
-    return drawerShell("재색인 실행이력 상세", r.id, '<dl class="ad-dl"><dt>실행 ID</dt><dd class="mono">' + r.id + '</dd><dt>실행일시</dt><dd class="mono">' + dt(r.at) + "</dd><dt>실행자</dt><dd>" + NAME(r.by) + "</dd><dt>범위</dt><dd>" + r.scope + "</dd><dt>결과</dt><dd>" + r.result + '</dd><dt>종료일시</dt><dd class="mono">' + (r.end ? dt(r.end) : "—") + "</dd><dt>실패사유</dt><dd>" + (r.reason || "—") + "</dd></dl>", '<button class="ad-btn" type="button" data-act="close">닫기</button>');
+    return drawerShell("재색인 실행이력 상세", r.id, '<dl class="ad-dl"><dt>실행 ID</dt><dd class="mono">' + r.id + '</dd><dt>실행일시</dt><dd class="mono">' + dt(r.at) + "</dd><dt>실행자</dt><dd>" + NAME(r.by) + "</dd><dt>범위</dt><dd>" + r.scope + "</dd><dt>결과</dt><dd>" + runBadge(r.result) + '</dd><dt>종료일시</dt><dd class="mono">' + (r.end ? dt(r.end) : "—") + "</dd><dt>실패사유</dt><dd>" + (r.reason || "—") + "</dd></dl>", '<button class="ad-btn" type="button" data-act="close">닫기</button>');
   };
 
   // ---------- SCR-M08 미션·체험현황 ----------
