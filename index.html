@@ -348,6 +348,14 @@ body { background: var(--surface); color: var(--ink); }
 .ad-secret { display: flex; gap: var(--space-2); align-items: center; }
 .ad-secret output { flex: 1; min-width: 0; padding: 8px 12px; border: 1px solid var(--line-control); border-radius: var(--radius-md); background: var(--surface-muted); font-family: var(--font-mono); font-size: 18px; line-height: 24px; letter-spacing: 1px; overflow-wrap: anywhere; }
 
+/* ---------- 토스트(마지막 로그인 알림 전용) ---------- */
+.ad-toast-region { position: fixed; top: calc(var(--topbar-height) + var(--space-3)); right: var(--space-5); z-index: 50; display: flex; flex-direction: column; gap: var(--space-2); pointer-events: none; }
+.ad-toast { pointer-events: auto; display: flex; align-items: center; gap: var(--space-2); min-width: 240px; max-width: 360px; padding: 10px 8px 10px 14px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-md); box-shadow: var(--shadow-popover); font-size: 13px; line-height: 20px; }
+.ad-toast > svg.lucide:first-child { color: var(--accent); flex: none; }
+.ad-toast > span { flex: 1; min-width: 0; }
+@media (prefers-reduced-motion: no-preference) { .ad-toast { animation: ad-toast-in 160ms ease-out; } }
+@keyframes ad-toast-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
 /* ---- 프로토타입 화면 ---- */
 .proto-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); background: var(--accent-soft); border-bottom: 1px solid var(--line); font-size: 12px; }
 .proto-bar strong { color: var(--accent); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
@@ -449,6 +457,8 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
 .login-hint { display: flex; gap: 6px; margin: 0; font-size: 12px; line-height: 18px; color: var(--ink-muted); }
 .login-hint svg.lucide { width: 14px; height: 14px; margin-top: 2px; }
 #modal .ad-modal-layer, #modal { z-index: 40; }
+/* 프로토타입 설정 바만큼 아래로: 상단 바(계정·로그아웃)를 가리지 않게 */
+#toast.ad-toast-region { top: calc(var(--topbar-height) + 60px); }
 #login { min-height: calc(100% - 43px); }
 #login .ad-login { min-height: calc(100vh - 43px); }
 @media (max-width: 1100px) { .split.even, .split.rev, .media-grid, .ops-grid { grid-template-columns: minmax(0, 1fr); } }
@@ -488,6 +498,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   </div>
   <div id="login" hidden></div>
   <div id="layer" hidden></div>
+  <div id="toast" class="ad-toast-region" aria-live="polite"></div>
   <div id="modal" hidden><div class="ad-modal-layer" id="modal-inner"></div></div>
   <div class="ad-notice logout-note" id="logout-note" role="status" hidden><i data-lucide="info"></i><span>프로토타입에서는 로그아웃 후 관리자 로그인(SCR-M01)으로 이동하는 대신 현재 화면에 머뭅니다.</span></div>
 </div>
@@ -638,7 +649,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     var channels = [{ n: "QR", v: 0.34 }, { n: "NFC", v: 0.12 }, { n: "URL", v: 0.06 }, { n: "비전AI", v: 0.28 }, { n: "번호검색·목록", v: 0.2 }].map(function (c) { return { n: c.n, v: Math.round(views * c.v) }; });
     channels[0].v += views - channels.reduce(function (a, b) { return a + b.v; }, 0);
     var weights = EXHIBITS.map(function (e, k) { return (k === 0 ? 9 : k < 4 ? 6 : 1.5) + rnd() * 4; }), wsum = weights.reduce(function (a, b) { return a + b; }, 0);
-    var list = EXHIBITS.map(function (e, k) { return { id: "EXH-" + String(101 + k).padStart(6, "0"), name: e[0], cat: e[1], v: Math.round(views * weights[k] / wsum) }; }).sort(function (a, b) { return b.v - a.v; });
+    var list = EXHIBITS.map(function (e, k) { return { id: exId(k + 1), name: e[0], cat: e[1], v: Math.round(views * weights[k] / wsum) }; }).sort(function (a, b) { return b.v - a.v; });
     return { r: r, sessions: sessions, labels: labels, totalSessions: totalSessions, hourly: hourly, langs: langs, channels: channels, views: views, mission: mission, list: list };
   }
   function m02() {
@@ -777,6 +788,8 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   var setFlash = function (scr, text, kind) { state.flash = { screen: scr, text: text, kind: kind || "" }; };
   var me = function () { return ROLES[state.role].id; };
   var canEdit = function () { return state.role === "A2"; };
+  // 전시물 ID: 3관 RAG 지식데이터셋 ID(NFM-EX-0001~0051)를 잠정 채택(설계이슈 ISS-31). 이후 등록분은 예시로 0052부터
+  var exId = function (n) { return "NFM-EX-" + String(n).padStart(4, "0"); };
   var empty = function (icon, title, desc, btn) { return '<div class="ad-empty"><div class="ad-empty__icon">' + ic(icon) + "</div><h3>" + title + "</h3><p>" + desc + "</p>" + (btn || "") + "</div>"; };
 
   // ---------- 데이터 ----------
@@ -785,6 +798,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     { id: "content02", name: "이서연", role: "A2", status: "사용 중", last: ago(60 * 26), created: new Date(2026, 6, 1, 10, 5), ips: ["192.168.10.22"], contact: "" },
     { id: "content03", name: "오세훈", role: "A2", status: "사용 중", last: ago(60 * 24 * 9), created: new Date(2026, 7, 12, 9, 30), ips: ["192.168.10.23"], contact: "" },
     { id: "content04", name: "윤하늘", role: "A2", status: "사용 중", last: null, created: ago(60 * 3), ips: ["192.168.10.24"], contact: "", temp: "Kq7mx29WpD4tHn3R" },
+    { id: "content05", name: "강도윤", role: "A2", status: "사용 중", last: null, created: ago(60 * 24 * 12), ips: ["192.168.10.26"], contact: "", temp: "Wd8nRt3kFp6yHq2M", tempExpired: true },
     { id: "admin01", name: "박준호", role: "A3", status: "사용 중", last: ago(25), created: new Date(2026, 6, 1, 10, 10), ips: ["192.168.20.11", "192.168.20.12"], contact: "" },
     { id: "admin02", name: "최유진", role: "A3", status: "사용중지", last: ago(60 * 24 * 21), created: new Date(2026, 6, 3, 14, 0), ips: ["192.168.20.13"], contact: "" },
     { id: "sysadmin", name: "정다은", role: "A4", status: "사용 중", last: ago(12), created: new Date(2026, 6, 1, 9, 0), ips: ["192.168.30.5"], contact: "" },
@@ -802,7 +816,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
         : { name: e[0] + " (" + l.n + ")", summary: l.n + " 요약 설명(예시)", detail: l.n + " 상세 해설(예시)", etc: "" }) : { name: l.k === "ja" || l.k === "zht" ? "" : e[0], summary: "", detail: "", etc: "" };
     });
     var hasImg = k !== 21;
-    var row = { id: "EXH-" + String(101 + k).padStart(6, "0"), name: e[0], vision: true, cat: e[1], room: ROOMS[k % 3], loc: "진열장 " + (k % 12 + 1), mgmt: "민속" + String(20000 + k * 37), src: "국립 박물관 소장품(예시)", copy: "공공누리 제1유형(예시)", related: k === 0 ? ["EXH-000102", "EXH-000112"] : [],
+    var row = { id: exId(k + 1), name: e[0], vision: true, cat: e[1], room: ROOMS[k % 3], loc: "진열장 " + (k % 12 + 1), mgmt: "민속" + String(20000 + k * 37), src: "국립 박물관 소장품(예시)", copy: "공공누리 제1유형(예시)", related: k === 0 ? ["EXH-000102", "EXH-000112"] : [],
       lang: lang, images: hasImg ? [{ file: e[0] + "_대표.jpg", kind: "대표", size: (1.2 + rndE() * 2).toFixed(1) + "MB" }].concat(k === 0 ? [{ file: "활옷_흉배_세부.jpg", kind: "추가", size: "3.1MB" }] : []) : [],
       audio: k === 0 ? { ko: "활옷_해설_ko.mp3", en: "활옷_해설_en.mp3" } : {}, updated: ago(60 * (3 + k * 17)), by: k % 2 ? "content02" : "content01" };
     row.pub = publishable(row).ok && k !== 8 ? "공개" : "비공개";
@@ -863,9 +877,10 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     return '<div class="ad-login"><form class="ad-login__card" data-form="login" novalidate><div><div class="ad-section-label">문화관람 관리자</div><h1>관리자 로그인</h1></div>' +
       '<div class="ad-field"><label class="ad-label" for="l-id">계정 ID</label><input class="ad-input mono" id="l-id" autocomplete="username" value="' + esc(state.loginId || "") + '"></div>' +
       '<div class="ad-field"><label class="ad-label" for="l-pw">비밀번호</label><input class="ad-input" id="l-pw" type="password" autocomplete="current-password"></div>' +
-      (e ? '<div class="ad-notice ad-notice--danger" role="alert">' + ic("circle-x") + "<span>" + e + "</span></div>" : "") +
+      (e ? '<div class="ad-notice ' + (state.loginBusy ? "ad-notice--warning" : "ad-notice--danger") + '" role="alert">' + ic(state.loginBusy ? "clock" : "circle-x") + "<span>" + e + "</span></div>" : "") +
       '<button class="ad-btn ad-btn--primary" type="submit">로그인</button>' +
-      '<p class="login-hint">' + ic("flask-conical") + "예시 계정: content01(A2) · admin01(A3) · sysadmin(A4), 비밀번호는 아무 값. 사용중지 예시 admin02, 미허용 IP 예시 content03. 임시 비밀번호 계정은 상단 바에 표시합니다.</p></form></div>";
+      '<p class="ad-help">로그인이 계속되지 않으면 시스템 관리자에게 문의해 주세요.</p>' +
+      '<p class="login-hint">' + ic("flask-conical") + "예시 계정: content01(A2) · admin01(A3) · sysadmin(A4), 비밀번호는 아무 값. 비밀번호에 wrong을 넣으면 불일치(5회 연속이면 계정 잠김), busy를 넣으면 서버 처리 지연. 사용중지 admin02, 미허용 IP content03, 임시 비밀번호 만료 content05. 임시 비밀번호 계정은 상단 바에 표시합니다.</p></form></div>";
   }
   // 임시 비밀번호로 인증한 계정: 새 비밀번호를 설정하기 전에는 다른 화면으로 가지 않는다(FR-M37)
   function pwScreen() {
@@ -873,22 +888,33 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     return '<div class="ad-login"><form class="ad-login__card" data-form="pwChange" novalidate><div class="ad-login__head"><div><div class="ad-section-label">문화관람 관리자</div><h1>새 비밀번호 설정</h1></div><button class="ad-btn ad-btn--ghost ad-btn--sm" type="button" data-do="pwLogout">' + ic("log-out") + "로그아웃</button></div>" +
       '<div class="ad-notice">' + ic("key-round") + '<span><span class="mono">' + P.id + "</span> 계정은 임시 비밀번호로 로그인했습니다. 새 비밀번호를 설정해야 관리자 서비스를 사용할 수 있습니다.</span></div>" +
       (E._top ? '<div class="ad-notice ad-notice--danger" role="alert">' + ic("circle-x") + "<span>" + E._top + "</span></div>" : "") +
+      '<div class="ad-field"><label class="ad-label" for="p-cur">현재(임시) 비밀번호<span class="req">*</span></label><input class="ad-input" id="p-cur" type="password" autocomplete="current-password"' + (E.cur ? ' aria-invalid="true" aria-describedby="e-cur"' : "") + ">" + errLine("cur") + "</div>" +
       '<div class="ad-field"><label class="ad-label" for="p-new">새 비밀번호<span class="req">*</span></label><input class="ad-input" id="p-new" type="password" autocomplete="new-password"' + (E.pw ? ' aria-invalid="true" aria-describedby="e-pw"' : "") + ">" + errLine("pw") + "</div>" +
       '<div class="ad-field"><label class="ad-label" for="p-new2">새 비밀번호 확인<span class="req">*</span></label><input class="ad-input" id="p-new2" type="password" autocomplete="new-password"' + (E.pw2 ? ' aria-invalid="true" aria-describedby="e-pw2"' : "") + ">" + errLine("pw2") + "</div>" +
       '<p class="ad-help">비밀번호 규칙(길이·조합)은 패스워드 정책이 정해지면 이곳에 안내합니다.</p>' +
       '<button class="ad-btn ad-btn--primary" type="submit">' + ic("check") + "변경</button></form></div>";
   }
   FORMS.pwChange = function () {
-    var P = state.pwChange, a = ACCOUNTS.filter(function (x) { return x.id === P.id; })[0], pw = $("#p-new").value, pw2 = $("#p-new2").value;
+    var P = state.pwChange, a = ACCOUNTS.filter(function (x) { return x.id === P.id; })[0], pw = $("#p-new").value, pw2 = $("#p-new2").value, cur = $("#p-cur").value;
     P.err = {};
+    if (!cur) P.err.cur = "현재(임시) 비밀번호를 입력해 주십시오.";
+    else if (cur !== a.temp) P.err.cur = "현재 비밀번호가 올바르지 않습니다.";
     if (!pw) P.err.pw = "새 비밀번호를 입력해 주십시오.";
     else if (pw === a.temp) P.err.pw = "임시 비밀번호와 다른 비밀번호를 입력해 주십시오.";
     if (pw && !P.err.pw && pw !== pw2) P.err.pw2 = "새 비밀번호와 확인 입력이 다릅니다.";
     if (Object.keys(P.err).length) { P.err._top = "비밀번호를 변경하지 못했습니다. 표시된 항목을 확인해 주십시오."; render(); return; }
     a.temp = null; state.pwChange = null; state.loggedOut = false; state.role = a.role; ROLES[a.role].id = a.id;
     audit("계정·권한", "비밀번호 변경", a.id, "비밀번호", "—", "변경됨(값 비표시)");
-    go(ROLES[a.role].home); setFlash(ROLES[a.role].home, "새 비밀번호를 설정했습니다."); render();
+    go(ROLES[a.role].home); setFlash(ROLES[a.role].home, "새 비밀번호를 설정했습니다."); render(); lastLoginToast(P.prev);
   };
+  // 로그인 직후 진입 화면에서 직전 성공 로그인 시각을 한 번 알린다. 첫 로그인이면 표시하지 않는다(14M 공통)
+  var toastTimer = null;
+  function lastLoginToast(prev) {
+    if (!prev) return;
+    state.toast = { text: "마지막 로그인: " + dt(prev) }; render();
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { state.toast = null; render(); }, 6000);
+  }
+  DO.toastClose = function () { clearTimeout(toastTimer); state.toast = null; render(); };
   DO.pwLogout = function () { ACCESS.unshift({ k: 7000 + ACCESS.length, at: now(), acc: state.pwChange.id, typed: state.pwChange.id, type: "로그아웃", ip: "192.168.10.24", result: "성공", reason: "" }); state.pwChange = null; state.loginId = ""; render(); };
   var TMP_CH = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   // 상세설계(API-I1M) 기준: 16자, 혼동하기 쉬운 글자(0 O 1 l I) 제외
@@ -896,14 +922,28 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   FORMS.login = function () {
     var id = $("#l-id").value.trim(), pw = $("#l-pw").value, a = ACCOUNTS.filter(function (x) { return x.id === id; })[0];
     state.loginId = id;
+    // 로그인 실패는 사유를 구분하지 않는 같은 안내를 쓰고, 사유는 접근이력에만 남긴다(18M §2.1)
+    var GENERIC = "계정 ID 또는 비밀번호를 확인해 주십시오.";
+    state.loginBusy = false;
     var fail = function (msg, type, result, reason) { state.loginError = msg; ACCESS.unshift({ k: 5000 + ACCESS.length, at: now(), acc: a ? a.id : "", typed: id || "(빈 값)", type: type, ip: id === "content03" ? "10.20.4.18" : "192.168.10.99", result: result, reason: reason }); render(); };
-    if (!id || !pw || !a) return fail("계정 ID 또는 비밀번호가 올바르지 않습니다.", "로그인", "실패", a ? "비밀번호 미입력" : "등록되지 않은 계정 ID");
-    if (a.status !== "사용 중") return fail("사용할 수 없는 계정입니다. 시스템관리자에게 문의해 주십시오.", "로그인", "실패", "사용중지 계정");
-    if (a.temp && pw !== a.temp) return fail("계정 ID 또는 비밀번호가 올바르지 않습니다.", "로그인", "실패", "비밀번호 불일치");
-    if (id === "content03") return fail("허용되지 않은 위치에서 접속했습니다. 시스템관리자에게 문의해 주십시오.", "접근 차단", "차단", "허용되지 않은 접속 IP");
+    // 서버 비밀번호 검증 처리량 초과(503): 로그인 실패와 구분해 다시 시도하게 한다. 세션을 만들지 않는다
+    if (pw === "busy") { state.loginError = "잠시 후 다시 시도해 주세요."; state.loginBusy = true; render(); return; }
+    if (!id || !pw || !a) return fail(GENERIC, "로그인", "실패", a ? "비밀번호 미입력" : "등록되지 않은 계정 ID");
+    if (a.locked) return fail(GENERIC, "로그인", "실패", "잠긴 계정");
+    var wrong = a.temp ? pw !== a.temp : pw === "wrong";
+    if (wrong) {
+      // 연속 5회 불일치면 잠근다. 계정의 허용 IP에서 온 요청만 센다(content03은 미허용 IP 예시)
+      if (id !== "content03") { a.fails = (a.fails || 0) + 1; if (a.fails >= 5) a.locked = true; }
+      return fail(GENERIC, "로그인", "실패", a.locked ? "비밀번호 불일치(연속 5회, 계정 잠김)" : "비밀번호 불일치");
+    }
+    if (a.status !== "사용 중") return fail(GENERIC, "로그인", "실패", "사용중지 계정");
+    if (a.temp && a.tempExpired) return fail(GENERIC, "로그인", "실패", "임시 비밀번호 유효기간 경과");
+    if (id === "content03") return fail(GENERIC, "접근 차단", "차단", "허용되지 않은 접속 IP");
+    a.fails = 0;
     ACCESS.unshift({ k: 5000 + ACCESS.length, at: now(), acc: a.id, typed: a.id, type: "로그인", ip: a.ips[0], result: "성공", reason: "" });
-    if (a.temp) { a.last = now(); state.loginError = ""; state.pwChange = { id: a.id, err: {} }; render(); var f = $("#p-new"); if (f) f.focus(); return; }
-    a.last = now(); state.loginError = ""; state.loggedOut = false; state.role = a.role; ROLES[a.role].id = a.id; go(ROLES[a.role].home);
+    var prev = a.last;
+    if (a.temp) { a.last = now(); state.loginError = ""; state.pwChange = { id: a.id, err: {}, prev: prev }; render(); var f = $("#p-cur"); if (f) f.focus(); return; }
+    a.last = now(); state.loginError = ""; state.loggedOut = false; state.role = a.role; ROLES[a.role].id = a.id; go(ROLES[a.role].home); lastLoginToast(prev);
   };
 
   // ---------- SCR-M03 전시물 목록 ----------
@@ -931,7 +971,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   function clone(x) { return JSON.parse(JSON.stringify(x, function (k, v) { return v; }), function (k, v) { return (k === "updated") ? new Date(v) : v; }); }
   DO.m04open = function (id) { var x = byId(id); state.m04 = { mode: "edit", id: id, draft: clone(x), tab: "basic", lang: "ko", dirty: false, pubChoice: x.pub, pubError: null }; state.flash = null; go("m04"); };
   DO.m04new = function () {
-    var next = "EXH-" + String(101 + DB.length).padStart(6, "0"), lang = {}; LANGS.forEach(function (l) { lang[l.k] = { name: "", summary: "", detail: "", etc: "" }; });
+    var next = exId(52 + DB.length - EXHIBITS.length), lang = {}; LANGS.forEach(function (l) { lang[l.k] = { name: "", summary: "", detail: "", etc: "" }; });
     state.m04 = { mode: "new", id: next, draft: { id: next, vision: false, name: "", cat: "", room: "", loc: "", mgmt: "", src: "", copy: "", related: [], lang: lang, images: [], audio: {}, pub: "비공개", updated: now(), by: me() }, tab: "basic", lang: "ko", dirty: false, pubChoice: "비공개", pubError: null };
     state.flash = null; go("m04");
   };
@@ -1108,7 +1148,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       : '<div class="ad-panel__body"><dl class="ad-dl"><dt>현재 상태</dt><dd>' + ragBadge(RAG.status) + '</dd><dt>최근 성공 색인</dt><dd class="mono">' + dt(RAG.lastOk) + "</dd><dt>최근 실행결과</dt><dd>" + runBadge(RAG.runs.filter(function (r) { return r.result !== "거부(실행 중)"; })[0].result) + "</dd><dt>재색인 필요</dt><dd>" + (RAG.status === "재색인 필요" ? badge("warning", "필요", "refresh-cw") : "없음") + '</dd></dl><p class="ad-help">재색인 실행은 전시물 상세의 운영·RAG 탭에서 콘텐츠관리자(A2)가 합니다.</p></div>';
     var runs = RAG.runs.slice(0, 20);
     return pageHead("챗봇·RAG 현황", "챗봇 질문·응답 현황과 RAG 색인 운영현황. 질문·답변 원문은 제공하지 않습니다", '<button class="ad-btn ad-btn--ghost ad-btn--sm" type="button" data-do="ragNA">' + ic("flask-conical") + (ragNA ? "정상 조회 예시 보기" : "조회 불가 예시 보기") + "</button>") + flash("m07") + periodHtml(tooLongNote()) +
-      '<div class="ad-kpis">' + kpi("챗봇 이용 세션", fmt(sessions), "", "질문을 1건 이상 보낸 세션") + kpi("질문 요청", fmt(qs), "건", "답변 요청 기준 · 음성 인식 실패 제외") + kpi("정상 응답", fmt(ok), "건", "근거 부족 안내 포함") + kpi("응답 성공률", (100 * ok / qs).toFixed(1), "%", "정상 응답 ÷ 질문 요청") + "</div>" +
+      '<div class="ad-kpis">' + kpi("챗봇 이용 세션", fmt(sessions), "", "질문을 1건 이상 보낸 세션") + kpi("질문 요청", fmt(qs), "건", "답변 요청 기준 · 공통 질문·음성 인식 실패 제외") + kpi("정상 응답", fmt(ok), "건", "근거 부족 안내 포함") + kpi("응답 성공률", (100 * ok / qs).toFixed(1), "%", "정상 응답 ÷ 질문 요청") + "</div>" +
       '<section class="ad-panel"><div class="ad-panel__head"><div><h2>챗봇 이용 추이</h2><p>' + (R.days === 1 ? "시간 단위" : "일 단위") + '</p></div><div class="ad-legend"><span><i></i>질문 요청</span><span><i class="l2"></i>응답 실패</span></div></div><div class="ad-panel__body">' + lineChart(q.v, q.l, { label: "챗봇 이용 추이", second: failS }) + "</div></section>" +
       '<div class="split"><section class="ad-panel"><div class="ad-panel__head"><div><h2>언어별 이용현황</h2><p>챗봇에 실제 적용된 언어 기준</p></div></div><div class="ad-panel__body">' + donut(langs) + "</div></section>" +
       '<section class="ad-panel"><div class="ad-panel__head"><div><h2>전시물별 질문현황</h2><p>요청에 연결된 전시물 ID 기준</p></div><span class="ad-stamp">기본 정렬 질문 건수 내림차순</span></div><div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>전시물</th><th class="num" aria-sort="descending">질문 건수' + ic("arrow-down") + '</th><th class="num">비율</th></tr></thead><tbody>' + ex.map(function (e) { return "<tr><td>" + (e.id ? '<span class="cell-strong">' + e.n + '</span><span class="cell-sub mono">' + e.id + "</span>" : '<span class="muted">' + e.n + "</span>") + '</td><td class="num">' + fmt(e.v) + '</td><td class="num">' + (100 * e.v / qs).toFixed(1) + "%</td></tr>"; }).join("") + "</tbody></table></div></section></div>" +
@@ -1179,7 +1219,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       '<div class="danger-zone"><div class="dz-row"><div><strong>' + (a.status === "사용 중" ? "사용중지" : "사용 재개") + "</strong><p>" + (a.status === "사용 중" ? "로그인할 수 없게 되고 열려 있는 세션이 끊깁니다." : "다시 로그인할 수 있게 됩니다.") + "</p></div>" +
       (self || (lastA4 && a.status === "사용 중") ? '<button class="ad-btn ad-btn--danger" type="button" disabled>사용중지</button>' : '<button class="ad-btn ' + (a.status === "사용 중" ? "ad-btn--danger" : "") + '" type="button" data-do="acctToggle">' + (a.status === "사용 중" ? ic("ban") + "사용중지" : ic("rotate-ccw") + "사용 재개") + "</button>") + "</div>" +
       (self ? '<p class="ad-help">본인 계정은 사용중지할 수 없습니다.</p>' : lastA4 && a.status === "사용 중" ? '<p class="ad-help">마지막 시스템관리자(A4) 계정은 사용중지할 수 없습니다.</p>' : "") +
-      '<div class="dz-row"><div><strong>인증정보 재설정</strong><p>새 임시 비밀번호를 발급합니다. 기존 비밀번호와 열려 있는 세션은 바로 무효가 됩니다.</p></div><button class="ad-btn" type="button" data-do="acctReset">' + ic("key-round") + "재설정</button></div></div>";
+      '<div class="dz-row"><div><strong>인증정보 재설정</strong><p>새 임시 비밀번호를 발급합니다. 기존 비밀번호와 열려 있는 세션은 바로 무효가 됩니다. 연속 5회 불일치로 잠긴 계정도 재설정으로 풀립니다.</p></div><button class="ad-btn" type="button" data-do="acctReset">' + ic("key-round") + "재설정</button></div></div>";
     return drawerShell(isNew ? "계정 등록" : "계정 상세·편집", isNew ? "새 관리자 계정" : a.name + " · " + a.id, body, '<button class="ad-btn" type="button" data-act="close">취소</button><button class="ad-btn ad-btn--primary" type="button" data-do="acctSave">' + (isNew ? "등록" : "저장") + "</button>", true);
   };
   DO.ipAdd = function () { var F = state.drawer.form, ip = F.ipIn.trim(); F.err = {}; if (!IPRE.test(ip)) F.err.ip = "IP 형식이 올바르지 않습니다. 예: 192.168.10.24, 192.168.10.0/24, 2001:db8::1"; else if (F.ips.length >= 20) F.err.ip = "접속 허용 IP는 20개까지 등록할 수 있습니다."; else if (F.ips.indexOf(ip) >= 0) F.err.ip = "이미 등록된 IP입니다."; else { F.ips.push(ip); F.ipIn = ""; } render(); };
@@ -1216,7 +1256,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   DO.acctToggleGo = function () { var a = ACCOUNTS.filter(function (x) { return x.id === state.drawer.k; })[0], b = a.status; a.status = b === "사용 중" ? "사용중지" : "사용 중"; audit("계정·권한", b === "사용 중" ? "계정 사용중지" : "계정 사용 재개", a.id, "계정 상태", b, a.status); state.modal = null; state.drawer = null; setFlash("m10", a.id + " 계정을 " + (a.status === "사용중지" ? "사용중지했습니다. 열려 있던 세션을 끊었습니다." : "다시 사용할 수 있게 했습니다.")); render(); };
   DO.acctResetGo = function () {
     var id = state.drawer.k, a = ACCOUNTS.filter(function (x) { return x.id === id; })[0], tp = genTemp();
-    a.temp = tp; audit("계정·권한", "인증정보 재설정", id, "인증정보", "—", "임시 비밀번호 발급됨(값 비표시)");
+    a.temp = tp; a.tempExpired = false; a.locked = false; a.fails = 0; audit("계정·권한", "인증정보 재설정", id, "인증정보", "—", "임시 비밀번호 발급됨(값 비표시)");
     state.drawer = null; setFlash("m10", id + " 계정의 인증정보를 재설정했습니다. 열려 있던 세션을 끊었습니다.");
     state.modal = { kind: "tempPw", id: id, why: "인증정보 재설정", pw: tp }; render();
   };
@@ -1300,6 +1340,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       // 기본 진입화면(m02·m09·m12)은 화면 함수에 안내 영역이 없어 제목 아래에 붙인다
       var ph = $("#main .ad-pagehead"); if (/^m(02|09|12)$/.test(s) && ph && flash(s)) ph.insertAdjacentHTML("afterend", flash(s));
     }
+    var tt = $("#toast"); tt.innerHTML = state.toast && !state.loggedOut ? '<div class="ad-toast" role="status">' + ic("clock") + "<span>" + state.toast.text + '</span><button class="ad-btn ad-btn--ghost ad-btn--icon ad-btn--sm" type="button" aria-label="알림 닫기" data-do="toastClose">' + ic("x") + "</button></div>" : "";
     var ml = $("#modal"); if (state.modal && MODALS[state.modal.kind]) { ml.innerHTML = '<div class="ad-modal-layer">' + MODALS[state.modal.kind]() + '</div>'; ml.hidden = false; } else { ml.innerHTML = ""; ml.hidden = true; }
     var layer = $("#layer");
     if (state.drawer) { layer.innerHTML = state.drawer.kind ? DRAWERS[state.drawer.kind](state.drawer) : state.drawer.id ? m02Drawer(state.drawer.id) : m09Drawer(state.drawer.err); layer.hidden = false; }
