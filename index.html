@@ -865,9 +865,9 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     ["분류", [["life_stage", "생애국면", 1, "select", LIFE], ["object_nature", "전시물 성격", 1, "select", NATURE], ["object_form", "형태 분류", 1, "select", FORM], ["display_status", "전시 상태", 1, "select", DISPLAY, "값 목록은 확정 전 예시입니다."]]],
     ["명칭·기본", [["title_ko", "명칭(국문)", 1, "text", null, "다국어 해설 국문 탭의 명칭과 같은 값입니다."], ["title_hanja", "한자명", 0], ["title_alias_ko", "이칭·별칭", 1], ["period_label", "시대", 1, "select", PERIOD], ["date_display", "연대 표기", 1], ["date_start", "시작 연도(숫자)", 0, "year", null, "숫자만 입력할 수 있습니다. 확인된 연도만 입력합니다."], ["date_precision", "연도 정밀도", 0, "select", PRECISION, "시작 연도를 입력하면 필수입니다."], ["creator", "제작자·작가", 0], ["country", "국가", 0], ["region", "지역", 0], ["material_raw", "재질(원문)", 1], ["dimensions_raw", "크기(원문)", 1], ["dimensions_std", "크기(표준)", 1, "text", null, "단위 포함. 예: 길이 24.5cm, 지름 6.2cm"], ["donor", "기증·수집", 0], ["designation", "지정 현황", 0], ["usage", "용도", 1], ["user_subject", "사용주체", 0]]]
   ];
-  var F_CONTEXT = [["ritual_stage_code", "의례단계", 0, "ritual", null, "명칭으로 고르면 의례단계 코드와 명칭이 함께 저장됩니다."], ["ritual_prev", "선행 단계", 0, "ritualName", null, "의례단계를 고르면 통제어의 선행 단계가 채워집니다. 바꿀 수 있습니다."], ["ritual_next", "후속 단계", 0, "ritualName", null, "의례단계를 고르면 통제어의 후속 단계가 채워집니다. 바꿀 수 있습니다."], ["usage_method", "사용방법", 0, "area"], ["historical_background", "시대배경", 0, "area"], ["cultural_meaning", "문화적 의미", 0, "area"], ["viewing_points", "감상 포인트", 0, "area"], ["disambiguation", "혼동 주의", 0, "area"], ["misconceptions", "오해 포인트", 0, "area"]];
+  var F_CONTEXT = [["ritual_stage_code", "의례단계", 0, "ritual", null, "명칭으로 고르면 의례단계 코드와 명칭이 함께 저장되고, 기본정보의 생애국면도 통제어에 맞춰 선택됩니다."], ["ritual_prev", "선행 단계", 0, "ritualName", null, "의례단계를 고르면 통제어의 선행 단계가 채워집니다. 바꿀 수 있습니다."], ["ritual_next", "후속 단계", 0, "ritualName", null, "의례단계를 고르면 통제어의 후속 단계가 채워집니다. 바꿀 수 있습니다."], ["usage_method", "사용방법", 0, "area"], ["historical_background", "시대배경", 0, "area"], ["cultural_meaning", "문화적 의미", 0, "area"], ["viewing_points", "감상 포인트", 0, "area"], ["disambiguation", "혼동 주의", 0, "area"], ["misconceptions", "오해 포인트", 0, "area"]];
   var F_RIGHTS = [["copyright", "저작권(해설문)", 1], ["attribution", "출처표시 문구", 1], ["source_display", "관람객 표시 출처", 1], ["source_id", "출처 식별자", 0, "mono"], ["usage_ml", "이용범위-AI학습", 1, "text", null, "정해진 값 없이 이용 가능한 범위를 문장으로 적습니다."], ["usage_service", "이용범위-서비스 노출", 1, "text", null, "정해진 값 없이 이용 가능한 범위를 문장으로 적습니다."], ["usage_open", "이용범위-대외 개방", 1, "text", null, "정해진 값 없이 이용 가능한 범위를 문장으로 적습니다."]];
-  var F_BOT = [["guardrails", "답변 시 주의"], ["keywords_ko", "검색어"], ["pronunciation_notes", "발음 표기"]];
+  var F_BOT = [["guardrails", "답변 시 주의", "주의사항 추가"], ["keywords_ko", "검색어", "검색어 추가"], ["pronunciation_notes", "발음 표기", "발음 표기 추가"]];
   // 필드 설명(토글팁): [뜻, 예시, 쓰이는 곳]. 쓰이는 곳 V=관람객 화면, B=챗봇 답변·검색, M=관리용(서비스 비노출). 뜻은 RAG 데이터셋 스키마 필드 설명을 관리자용으로 다듬은 것
   var INFO = {
     exhibit_id: ["전시물마다 하나씩 붙는 고유 번호입니다. QR·NFC와 모든 데이터 연결의 기준입니다.", "NFM-EX-0001", "M"],
@@ -951,7 +951,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     f.title_ko = e[0]; f.title_hanja = k === 0 ? "活衣" : ""; f.title_alias_ko = k === 0 ? "홍장삼" : e[0]; f.period_label = k % 3 ? "조선 후기" : "19세기"; f.date_display = k % 3 ? "조선 후기" : "19세기"; f.date_start = k % 3 ? "" : "1800"; f.date_precision = k % 3 ? "" : "연대";
     f.creator = ""; f.region = ""; f.material_raw = k === 0 ? "비단, 면" : "(예시) 나무"; f.dimensions_raw = "길 120, 폭 80"; f.dimensions_std = "길이 120cm, 폭 80cm"; f.donor = ""; f.designation = ""; f.usage = k === 0 ? "혼례 때 신부가 입는 대례복" : e[0] + "의 쓰임(예시)"; f.user_subject = "";
     F_CONTEXT.forEach(function (c) { f[c[0]] = ""; }); if (k === 0) { f.ritual_stage_code = "R45"; f.ritual_stage_label = RIT.R45[2]; f.ritual_prev = RIT.R44[2]; f.ritual_next = RIT.R46[2]; f.cultural_meaning = "부부의 화합과 자손의 번창을 비는 문양을 수놓았습니다."; f.viewing_points = "앞뒤의 모란·연꽃·봉황 자수와 소매 끝 색동을 살펴보십시오."; }
-    f.source_id = ""; f.guardrails = k === 0 ? "문양의 의미는 추정이라고 밝힐 것" : ""; f.keywords_ko = k === 0 ? "혼례\n예복\n자수" : ""; f.pronunciation_notes = "";
+    f.source_id = ""; f.guardrails = k === 0 ? ["문양의 의미는 추정이라고 밝힐 것"] : []; f.keywords_ko = k === 0 ? ["혼례", "예복", "자수"] : []; f.pronunciation_notes = [];
     PLATFORM.forEach(function (p) { f[p[0]] = p[0] === "identifier" ? "NFM-" + String(k + 1).padStart(4, "0") : p[0] === "class_code" ? "C" + String(100 + k) : "(위프코 적재값)"; });
     LANGS.forEach(function (l) {
       var L = blankLang(); L.approved = true; // 초기 적재 데이터는 모두 승인 상태
@@ -1119,7 +1119,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   DO.m04new = function () {
     var next = exId(52 + DB.length - EXHIBITS.length), f = {};
     Object.keys(DEFAULTS).forEach(function (k) { f[k] = DEFAULTS[k]; });
-    F_BASIC.forEach(function (g) { g[1].forEach(function (c) { if (!(c[0] in f)) f[c[0]] = ""; }); }); F_CONTEXT.concat(F_RIGHTS).forEach(function (c) { if (!(c[0] in f)) f[c[0]] = ""; }); F_BOT.forEach(function (c) { f[c[0]] = ""; }); PLATFORM.forEach(function (p) { f[p[0]] = ""; });
+    F_BASIC.forEach(function (g) { g[1].forEach(function (c) { if (!(c[0] in f)) f[c[0]] = ""; }); }); F_CONTEXT.concat(F_RIGHTS).forEach(function (c) { if (!(c[0] in f)) f[c[0]] = ""; }); F_BOT.forEach(function (c) { f[c[0]] = []; }); PLATFORM.forEach(function (p) { f[p[0]] = ""; });
     var i18n = {}, audio = {}; LANGS.forEach(function (l) { i18n[l.k] = blankLang(); audio[l.k] = blankAudio(); });
     state.m04 = { mode: "new", id: next, draft: { id: next, vision: false, pub: "비공개", updated: now(), by: me(), f: f, i18n: i18n, media: { image: { file: "", size: "" }, audio: audio }, rel: [] }, tab: "basic", lang: "ko", dirty: false, pubChoice: "비공개", pubError: null, errs: {} };
     state.flash = null; go("m04");
@@ -1170,15 +1170,16 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       return '<div class="ad-field' + (tip.btn ? " ad-field--info" : "") + (span || type === "area" ? " span-2" : "") + '">' + lab + ctrl + foot + "</div>";
     };
     var roField = function (label, val, help, key) { var tip = infoTip(key, "ro-" + key, label); return '<div class="ad-field' + (tip.btn ? " ad-field--info" : "") + '"><div class="ad-label-row"><span class="ad-label">' + label + "</span>" + tip.btn + "</div>" + tip.box + '<input class="ad-input mono" value="' + esc(val) + '" readonly aria-label="' + label + '">' + (help ? '<span class="ad-help">' + help + "</span>" : "") + "</div>"; };
-    // 후속 질문: 한 칸에 하나, 최대 3개까지 추가
-    var fuList = function (list, path) {
-      var tip = infoTip("followups", "f-fu", "후속 질문");
-      var rows = list.map(function (q, i) { return '<div class="fu-row"><input class="ad-input" id="f-fu-' + i + '" data-bind="' + path + "." + i + '" aria-label="후속 질문 ' + (i + 1) + '" value="' + esc(q) + '"' + (ro ? " readonly" : "") + ">" + (ro ? "" : '<button class="ad-btn ad-btn--ghost ad-btn--icon" type="button" aria-label="후속 질문 ' + (i + 1) + ' 삭제" data-do="m04fuDel" data-arg="' + i + '">' + ic("x") + "</button>") + "</div>"; }).join("");
-      return '<div class="ad-field ad-field--info span-2"><div class="ad-label-row"><span class="ad-label" id="l-fu">후속 질문</span>' + tip.btn + "</div>" + tip.box +
-        '<div class="fu-list" role="group" aria-labelledby="l-fu">' + (rows || '<span class="muted">등록된 후속 질문이 없습니다.</span>') + "</div>" +
-        (ro ? "" : '<div><button class="ad-btn ad-btn--sm" type="button" data-do="m04fuAdd"' + (list.length >= 3 ? " disabled" : "") + ">" + ic("plus") + "질문 추가</button></div>") +
-        '<span class="ad-help">' + (list.length >= 3 ? "최대 3개까지 등록했습니다." : "최대 3개까지 추가할 수 있습니다. 챗봇 답변 아래에 버튼으로 표시됩니다.") + "</span></div>";
+    // 목록 입력: 한 칸에 한 항목, "+ 추가"로 칸을 늘리고 칸마다 삭제. max가 있으면 그 수에서 추가 버튼을 끈다
+    var listInput = function (key, label, list, path, idp, addLabel, max, help, fullHelp) {
+      var tip = infoTip(key, idp, label), full = max && list.length >= max;
+      var rows = list.map(function (q, i) { return '<div class="fu-row"><input class="ad-input" id="' + idp + "-" + i + '" data-bind="' + path + "." + i + '" aria-label="' + label + " " + (i + 1) + '" value="' + esc(q) + '"' + (ro ? " readonly" : "") + ">" + (ro ? "" : '<button class="ad-btn ad-btn--ghost ad-btn--icon" type="button" aria-label="' + label + " " + (i + 1) + ' 삭제" data-do="m04listDel" data-arg="' + path + "|" + i + '">' + ic("x") + "</button>") + "</div>"; }).join("");
+      return '<div class="ad-field ad-field--info span-2"><div class="ad-label-row"><span class="ad-label" id="l-' + idp + '">' + label + "</span>" + tip.btn + "</div>" + tip.box +
+        '<div class="fu-list" role="group" aria-labelledby="l-' + idp + '">' + (rows || '<span class="muted">등록된 항목이 없습니다.</span>') + "</div>" +
+        (ro ? "" : '<div><button class="ad-btn ad-btn--sm" type="button" data-do="m04listAdd" data-arg="' + path + '" data-max="' + (max || "") + '" data-idp="' + idp + '"' + (full ? " disabled" : "") + ">" + ic("plus") + addLabel + "</button></div>") +
+        '<span class="ad-help">' + (full ? fullHelp : help) + "</span></div>";
     };
+    var fuList = function (list, path) { return listInput("followups", "후속 질문", list, path, "f-fu", "질문 추가", 3, "최대 3개까지 추가할 수 있습니다. 챗봇 답변 아래에 버튼으로 표시됩니다.", "최대 3개까지 등록했습니다."); };
     var group = function (title, inner) { return '<section class="ad-panel form-group"><div class="ad-panel__head"><h2>' + title + '</h2></div><div class="ad-panel__body"><div class="form-grid">' + inner + "</div></div></section>"; };
     var head = '<a class="back" href="#m03" data-nav="m03">' + ic("arrow-left") + "전시물 목록</a>" +
       '<div class="ad-pagehead"><div><h1>' + (isNew ? "전시물 신규등록" : esc(exName(x))) + '</h1><div class="meta-row"><span class="mono">' + x.id + (isNew ? " · 저장 시 생성" : "") + "</span>" + pubBadge(isNew ? "비공개" : byId(x.id).pub) + regBadge(isNew ? x : byId(x.id)) + visionBadge(x) + (ro ? badge("outline", "조회 전용", "lock") : "") + "</div></div>" +
@@ -1228,7 +1229,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
         '<section class="ad-panel"><div class="ad-panel__head"><h2>RAG 상태</h2>' + ragBadge(isNew && !S.justCreated ? "미색인" : RAG.status) + '</div><div class="ad-panel__body stack"><dl class="ad-dl"><dt>현재 상태</dt><dd>' + (isNew && !S.justCreated ? "미색인" : RAG.status) + '</dd><dt>최근 색인</dt><dd class="mono">' + dt(RAG.lastOk) + "</dd><dt>최근 결과</dt><dd>" + RAG.lastResult + "</dd></dl>" +
         '<div class="ad-notice' + (RAG.status === "재색인 필요" ? " ad-notice--warning" : "") + '">' + ic(RAG.status === "재색인 필요" ? "triangle-alert" : "info") + "<span>" + (RAG.status === "재색인 필요" ? "저장한 내용이 챗봇 답변에 반영되려면 재색인을 실행해야 합니다. 재색인 전까지 챗봇은 이전에 색인한 내용으로 답합니다." : RAG.status === "색인 중" ? "전체 재색인이 진행 중입니다. 끝나면 상태가 최신 또는 실패로 바뀝니다." : "재색인을 실행하면 공개된 전시물의 승인된 내용이 모두 챗봇 정보에 반영됩니다.") + "</span></div>" +
         (ro ? "" : '<div><button class="ad-btn ad-btn--primary" type="button" data-do="m04reindex"' + (ragOn && !isNew ? "" : " disabled") + ">" + ic("database") + '재색인 실행</button><button class="ad-btn ad-btn--ghost ad-btn--sm" type="button" data-do="busyDemo" aria-pressed="' + !!state.busyDemo + '">' + ic("flask-conical") + (state.busyDemo ? "거부 예시 끄기" : "실행 중 거부 예시") + '</button><span class="ad-help btn-help">' + (isNew ? "신규 전시물은 먼저 저장해야 합니다." : RAG.status === "최신" ? "상태가 최신이라 실행할 필요가 없습니다." : RAG.status === "색인 중" ? "색인이 끝날 때까지 다시 실행할 수 없습니다." : "") + "</span></div>") + "</div></section></div>" +
-        group("챗봇 보조", F_BOT.map(function (c) { return field([c[0], c[1], 0, "area", null, "한 줄에 하나씩 입력합니다."], "f." + c[0], x.f[c[0]]); }).join("")) +
+        group("챗봇 보조", F_BOT.map(function (c) { return listInput(c[0], c[1], x.f[c[0]], "f." + c[0], "f-" + c[0], c[2], 0, "한 칸에 하나씩 추가합니다. 선택 항목입니다."); }).join("")) +
         group("공동활용플랫폼(조회)", PLATFORM.map(function (p) { return roField(p[1], x.f[p[0]] || "—"); }).join("")) + '<p class="ad-help">공동활용플랫폼 값은 연계 방식이 정해지기 전이라 조회만 합니다.</p>';
     }
     var errBox = S.errList && S.errList.length ? '<div class="ad-notice ad-notice--danger" role="alert">' + ic("circle-x") + "<span><strong>저장하지 못했습니다.</strong> 아래 항목을 채우거나 고쳐 주십시오: " + S.errList.map(function (e) { return esc(e.label) + "(" + M04_TABS.filter(function (t) { return t[0] === e.tab; })[0][1] + ")"; }).join(", ") + "</span></div>" : "";
@@ -1243,8 +1244,9 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   DO.m04audSet = function (k) { var d = state.m04.draft, A = d.media.audio[k]; A.file = (d.f.title_ko || "전시물") + "_해설_" + k + ".mp3"; A.scriptChanged = false; state.m04.dirty = true; render(); };
   function closeTips(except) { Array.prototype.forEach.call(document.querySelectorAll('.ad-info[aria-expanded="true"]'), function (b) { if (b === except) return; b.setAttribute("aria-expanded", "false"); var t = document.getElementById(b.getAttribute("aria-controls")); if (t) t.hidden = true; }); }
   DO.tip = function (a, el) { var open = el.getAttribute("aria-expanded") === "true", t = document.getElementById(el.getAttribute("aria-controls")); closeTips(el); el.setAttribute("aria-expanded", String(!open)); if (t) t.hidden = open; };
-  DO.m04fuAdd = function () { var L = state.m04.draft.i18n[state.m04.lang]; if (L.followups.length >= 3) return; L.followups.push(""); state.m04.dirty = true; render(); var el = document.getElementById("f-fu-" + (L.followups.length - 1)); if (el) el.focus(); };
-  DO.m04fuDel = function (i) { state.m04.draft.i18n[state.m04.lang].followups.splice(+i, 1); state.m04.dirty = true; render(); };
+  function getPath(o, p) { p.split(".").forEach(function (k) { o = o[k]; }); return o; }
+  DO.m04listAdd = function (path, el) { var list = getPath(state.m04.draft, path), max = +el.dataset.max; if (max && list.length >= max) return; list.push(""); state.m04.dirty = true; render(); var inp = document.getElementById(el.dataset.idp + "-" + (list.length - 1)); if (inp) inp.focus(); };
+  DO.m04listDel = function (a) { var p = a.split("|"); getPath(state.m04.draft, p[0]).splice(+p[1], 1); state.m04.dirty = true; render(); };
   DO.m04share = function () { var A = state.m04.draft.media.audio.zht; A.share = !A.share; state.m04.dirty = true; render(); };
   DO.m04pub = function (p) { var S = state.m04; S.pubChoice = p; S.pubError = p === "공개" && !publishable(S.mode === "new" ? S.draft : byId(S.id)).ok; if (S.pubError) S.pubChoice = isPub(S); else S.dirty = true; render(); };
   function isPub(S) { return S.mode === "new" ? "비공개" : byId(S.id).pub; }
@@ -1259,6 +1261,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     if (miss.length) { S.errList = miss; S.tab = miss[0].tab; if (miss[0].tab === "lang" || miss[0].tab === "media") { var bad = LANGS.filter(function (l) { return miss.some(function (m) { return m.label.indexOf(l.n) === 0; }); })[0]; if (bad && miss[0].tab === "lang") S.lang = bad.k; } render(); return; }
     S.errList = null; d.f.guide_no = String(d.f.guide_no).trim();
     Object.keys(FIXED).forEach(function (k) { d.f[k] = FIXED[k]; });
+    F_BOT.forEach(function (c) { d.f[c[0]] = d.f[c[0]].map(function (q) { return String(q).trim(); }).filter(Boolean); });
     LANGS.forEach(function (l) { d.i18n[l.k].followups = d.i18n[l.k].followups.map(function (q) { return String(q).trim(); }).filter(Boolean); });
     var willApprove = LANGS.filter(function (l) { return langTouched(d, l.k); }).map(function (l) { return l.k; });
     if (S.pubChoice === "공개" && willApprove.length < 5) { S.pubError = true; S.pubChoice = isPub(S); S.tab = "ops"; render(); return; }
@@ -1267,7 +1270,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     willApprove.forEach(function (k) { d.i18n[k].approved = true; });
     if (S.mode === "new") { d.pub = "비공개"; DB.push(clone(d)); }
     else {
-      Object.keys(d.f).forEach(function (k) { if (PLATFORM.some(function (p) { return p[0] === k; })) return; if (String(before.f[k] || "") !== String(d.f[k] || "")) { rows.push({ area: AREA_OF(k), lang: "—", item: LABEL_OF(k), before: before.f[k] || "—", after: d.f[k] || "—" }); if (NO_RAG.indexOf(k) < 0) ragHit = true; } });
+      Object.keys(d.f).forEach(function (k) { if (PLATFORM.some(function (p) { return p[0] === k; })) return; var fv = function (v) { return (Array.isArray(v) ? v.join(" / ") : v) || "—"; }; if (JSON.stringify(before.f[k] || "") !== JSON.stringify(d.f[k] || "")) { rows.push({ area: AREA_OF(k), lang: "—", item: LABEL_OF(k), before: fv(before.f[k]), after: fv(d.f[k]) }); if (NO_RAG.indexOf(k) < 0) ragHit = true; } });
       LANGS.forEach(function (l) { [["title", "명칭"], ["translit", "음역"], ["short", "핵심요약"], ["full", "기본 문화해설"], ["easy", "쉬운 해설"], ["expert", "전문가 해설"], ["followups", "후속 질문"]].forEach(function (p) { if (l.k === "ko" && p[0] === "title") return; var bv = before.i18n[l.k][p[0]], av = d.i18n[l.k][p[0]], show = function (v) { return (Array.isArray(v) ? v.join(" / ") : v) || "—"; }; if (JSON.stringify(bv) !== JSON.stringify(av)) { rows.push({ area: "다국어 해설", lang: l.n, item: p[1], before: show(bv), after: show(av) }); ragHit = true; } }); });
       if (JSON.stringify(before.media) !== JSON.stringify(d.media)) rows.push({ area: "이미지·음성", lang: "—", item: "대표 이미지·음성·대본", before: "이전 파일", after: "변경된 파일" });
       if (JSON.stringify(before.rel) !== JSON.stringify(d.rel)) { rows.push({ area: "기본정보", lang: "—", item: "관련 전시물", before: before.rel.length + "건", after: d.rel.length + "건" }); ragHit = true; }
@@ -1624,7 +1627,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   document.addEventListener("change", function (ev) {
     if (ev.target.dataset && ev.target.dataset.bind && state.m04 && ev.target.tagName === "SELECT") {
       var df = state.m04.draft.f; setPath(state.m04.draft, ev.target.dataset.bind, ev.target.value); state.m04.dirty = true;
-      if (ev.target.dataset.bind === "f.ritual_stage_code") { var rv = RIT[ev.target.value]; df.ritual_stage_label = rv ? rv[2] : ""; df.ritual_prev = rv && rv[3] ? RIT[rv[3]][2] : ""; df.ritual_next = rv && rv[4] ? RIT[rv[4]][2] : ""; }
+      if (ev.target.dataset.bind === "f.ritual_stage_code") { var rv = RIT[ev.target.value]; df.ritual_stage_label = rv ? rv[2] : ""; df.ritual_prev = rv && rv[3] ? RIT[rv[3]][2] : ""; df.ritual_next = rv && rv[4] ? RIT[rv[4]][2] : ""; if (rv) df.life_stage = rv[1]; }
       render(); return;
     }
     if (ev.target.dataset && ev.target.dataset.fbind && state.drawer && state.drawer.form) { state.drawer.form[ev.target.dataset.fbind] = ev.target.value; return; }
