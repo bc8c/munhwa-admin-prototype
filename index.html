@@ -128,6 +128,17 @@ body { background: var(--surface); color: var(--ink); }
 .ad-help { font-size: 12px; line-height: 18px; color: var(--ink-muted); }
 .ad-error { display: flex; align-items: center; gap: var(--space-1); font-size: 12px; line-height: 18px; color: var(--danger); }
 .ad-error svg.lucide { width: 14px; height: 14px; }
+/* 필드 설명 토글팁: 라벨 옆 정보 버튼을 누르면 뜻·예시·쓰이는 곳을 보여 준다 */
+.ad-field--info { position: relative; }
+.ad-label-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.ad-info { display: inline-grid; place-items: center; width: 20px; height: 20px; margin: -2px 0; padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink-muted); cursor: pointer; }
+.ad-info svg.lucide { width: 14px; height: 14px; }
+.ad-info:hover, .ad-info[aria-expanded="true"] { color: var(--accent); background: var(--accent-soft); }
+.ad-tip { position: absolute; z-index: 20; top: 24px; left: 0; width: min(340px, 100%); min-width: 240px; padding: var(--space-3); display: grid; gap: var(--space-2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-popover); font-size: 12px; line-height: 18px; color: var(--ink); }
+.ad-tip[hidden] { display: none; }
+.ad-tip__def { margin: 0; }
+.ad-tip__ex { margin: 0; color: var(--ink-muted); }
+.ad-tip__use { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1); color: var(--ink-muted); }
 .ad-control { position: relative; display: block; min-width: 0; }
 .ad-control > svg.lucide { position: absolute; top: 50%; transform: translateY(-50%); color: var(--ink-muted); pointer-events: none; }
 .ad-control > svg.lucide:first-child { left: 10px; }
@@ -830,7 +841,79 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   ];
   var F_CONTEXT = [["ritual_stage_code", "의례단계 코드", 0, "select", RITUAL], ["ritual_stage_label", "단계명", 0], ["ritual_prev", "선행 단계", 0], ["ritual_next", "후속 단계", 0], ["usage_method", "사용방법", 0, "area"], ["historical_background", "시대배경", 0, "area"], ["cultural_meaning", "문화적 의미", 0, "area"], ["viewing_points", "감상 포인트", 0, "area"], ["disambiguation", "혼동 주의", 0, "area"], ["misconceptions", "오해 포인트", 0, "area"]];
   var F_RIGHTS = [["copyright", "저작권(해설문)", 1], ["kogl_type", "공공누리 유형", 1, "select", KOGL], ["attribution", "출처표시 문구", 1], ["source_display", "관람객 표시 출처", 1], ["source_id", "출처 식별자", 0, "mono"], ["usage_ml", "이용범위-AI학습", 1, "text", null, "값 목록은 박물관 확정 전입니다."], ["usage_service", "이용범위-서비스 노출", 1, "text", null, "값 목록은 박물관 확정 전입니다."], ["usage_open", "이용범위-대외 개방", 1, "text", null, "값 목록은 박물관 확정 전입니다."]];
-  var F_BOT = [["guardrails", "답변 시 주의", "예: 문양의 의미는 추정이라고 밝힐 것"], ["keywords_ko", "검색어", "예: 떡, 문양, 절기"], ["pronunciation_notes", "발음 표기", "예: 떡살 [떡쌀]"]];
+  var F_BOT = [["guardrails", "답변 시 주의"], ["keywords_ko", "검색어"], ["pronunciation_notes", "발음 표기"]];
+  // 필드 설명(토글팁): [뜻, 예시, 쓰이는 곳]. 쓰이는 곳 V=관람객 화면, B=챗봇 답변·검색, M=관리용(서비스 비노출). 뜻은 RAG 데이터셋 스키마 필드 설명을 관리자용으로 다듬은 것
+  var INFO = {
+    exhibit_id: ["전시물마다 하나씩 붙는 고유 번호입니다. QR·NFC와 모든 데이터 연결의 기준입니다.", "NFM-EX-0001", "M"],
+    guide_no: ["관람객이 전시물 검색 탭의 번호검색에 입력하는 해설 번호입니다. 번호 체계는 확정 전입니다.", "12", "V"],
+    accession_no: ["박물관이 소장품에 붙인 관리번호입니다.", "", "M"],
+    gallery: ["전시물이 있는 전시관입니다. 같은 전시관의 전시물은 모두 같은 값을 씁니다.", "", "B"],
+    section: ["전시관 안의 전시부입니다. 해설문 부제목 형식 그대로 씁니다.", "1부: 출생", "B"],
+    location_detail: ["전시부 안의 진열장이나 구역입니다.", "", "B"],
+    holding_institution: ["전시물을 소장한 기관입니다.", "국립민속박물관", "M"],
+    life_stage: ["전시물이 한국인의 일생에서 어느 국면에 속하는지 정해진 목록에서 고릅니다.", "LS05 혼례", "VB"],
+    object_nature: ["실물인지, 재현품·재현공간·사진자료인지 등 전시물의 성격입니다. 전시물 목록 필터에도 씁니다.", "실물(단일)", "B"],
+    object_form: ["회화·복식·생활용구 등 전시물의 형태 분류입니다. 전시물 목록 필터에도 씁니다.", "복식", "B"],
+    display_status: ["전시중·교체·철수 등 현재 전시 상태입니다. 관람객 공개 여부와는 별개이며, 공개는 운영·RAG 탭에서 정합니다.", "", "M"],
+    title_ko: ["박물관이 정한 공식 국문 명칭입니다. 다국어 해설 국문 탭의 명칭으로도 쓰입니다.", "활옷", "VB"],
+    title_hanja: ["해설문 첫 문장 괄호 안의 한자 표기입니다. 없으면 비워 둡니다.", "", "B"],
+    title_alias_ko: ["같은 전시물을 가리키는 다른 이름입니다. 관람객이 다른 이름으로 물어도 챗봇이 찾을 수 있게 합니다.", "", "B"],
+    period_label: ["전시물의 시대를 정해진 목록에서 고릅니다.", "조선 후기", "B"],
+    date_display: ["답변에 그대로 쓰는 연대 표현입니다. 숫자 연도는 시작 연도에 따로 넣습니다.", "19세기 말", "B"],
+    date_start: ["연대를 숫자 연도로 나타낸 값입니다. '1890년'처럼 글자를 섞지 않습니다. 모르면 비워 둡니다.", "1800", "B"],
+    date_precision: ["시작 연도가 얼마나 정확한지 나타냅니다(세기·반세기·10년 단위 등).", "", "B"],
+    creator: ["작가가 밝혀진 전시물에만 입력합니다.", "", "B"],
+    country: ["제작·기원 국가입니다. 국내 제작은 '한국'. 확인된 값만 입력합니다.", "한국", "B"],
+    region: ["제작·기원 지역(시·도·군 등)입니다. 확인된 값만 입력하고 추정값은 넣지 않습니다.", "", "B"],
+    material_raw: ["자료에 적힌 재질 표기를 그대로 옮깁니다.", "비단", "B"],
+    dimensions_raw: ["자료에 적힌 크기 표기를 그대로 옮깁니다. 단위가 없으면 cm로 봅니다.", "", "B"],
+    dimensions_std: ["원문 크기를 표기 규칙에 맞춰 단위와 함께 정리한 값입니다.", "길이 24.5cm, 지름 6.2cm", "B"],
+    donor: ["기증·수집으로 들어온 전시물에만 입력합니다.", "", "B"],
+    designation: ["국가유산 지정 현황입니다. 비워 두면 미지정으로 봅니다.", "", "B"],
+    usage: ["전시물을 무엇에 썼는지입니다.", "", "B"],
+    user_subject: ["누가 썼는지(계층·집단)입니다. 확인된 값만 입력합니다.", "", "B"],
+    ritual_stage_code: ["의례 절차 중 이 전시물이 쓰이는 단계를 정해진 코드 목록에서 고릅니다.", "", "B"],
+    ritual_stage_label: ["의례단계의 이름입니다. 코드와 함께 입력합니다.", "", "B"],
+    ritual_prev: ["이 단계 바로 앞 단계에 대한 설명입니다.", "", "B"],
+    ritual_next: ["이 단계 바로 다음 단계에 대한 설명입니다.", "", "B"],
+    usage_method: ["실제로 어떻게 사용했는지에 대한 설명입니다.", "", "B"],
+    historical_background: ["전시물이 만들어지고 쓰인 시대 배경입니다.", "", "B"],
+    cultural_meaning: ["전시물에 담긴 문화적 의미입니다.", "", "B"],
+    viewing_points: ["전시장에서 눈으로 확인할 수 있는 관람 포인트입니다.", "", "B"],
+    disambiguation: ["비슷한 전시물이나 명칭과 혼동하기 쉬운 사실입니다. 챗봇이 둘을 구분해 답하는 데 씁니다.", "", "B"],
+    misconceptions: ["관람객이 흔히 잘못 아는 내용과 그것을 바로잡는 설명입니다.", "", "B"],
+    copyright: ["해설문의 저작권 이용조건입니다.", "", "M"],
+    kogl_type: ["공공누리 유형(제1~4유형)입니다.", "공공누리 제1유형", "M"],
+    attribution: ["자료를 이용할 때 반드시 표시해야 하는 출처 문구입니다.", "", "M"],
+    source_display: ["챗봇 답변의 출처로 관람객에게 보이는 문구입니다.", "", "B"],
+    source_id: ["관람객 표시 출처에 대응하는 출처 문서의 식별자입니다.", "NFM-CAT-2019-0112", "M"],
+    usage_ml: ["이 데이터를 AI 학습에 쓸 수 있는 범위입니다. 값 목록은 박물관 확정 전입니다.", "", "M"],
+    usage_service: ["이 데이터를 서비스에 노출할 수 있는 범위입니다. 값 목록은 박물관 확정 전입니다.", "", "M"],
+    usage_open: ["이 데이터를 외부에 개방할 수 있는 범위입니다. 값 목록은 박물관 확정 전입니다.", "", "M"],
+    title: ["이 언어로 표시할 전시물 명칭입니다.", "Hwarot (Bridal Robe)", "VB"],
+    translit: ["명칭을 소리 나는 대로 로마자나 가나로 적은 것입니다.", "Hwarot", "B"],
+    short: ["해설의 핵심을 몇 문장으로 줄인 요약입니다.", "", "B"],
+    full: ["일반 관람객을 위한 해설문입니다. 전시물 상세 화면에 그대로 표시됩니다.", "", "VB"],
+    easy: ["어린이 눈높이에 맞춘 해설문입니다. 챗봇이 이해 수준에 맞춰 답할 때 씁니다.", "", "B"],
+    expert: ["전문가 수준의 해설문입니다. 챗봇이 이해 수준에 맞춰 답할 때 씁니다.", "", "B"],
+    followups: ["이 전시물에 대해 이어서 물어볼 만한 질문입니다. 챗봇 답변 아래에 버튼으로 표시됩니다.", "떡살 문양에는 어떤 뜻이 있나요?", "VB"],
+    image_rights: ["대표 이미지의 저작권·공공누리·출처표시 정보입니다.", "", "M"],
+    script: ["음성 파일을 녹음·합성할 때 쓴 원천 대본입니다. 대본을 고치면 음성 파일도 다시 올립니다.", "", "M"],
+    tts: ["음성 합성 때 발음을 맞추기 위한 지시입니다.", "'떡살'은 [떡쌀]로 발음", "M"],
+    guardrails: ["챗봇이 이 전시물에 대해 답할 때 지킬 주의사항입니다.", "문양의 의미는 추정이라고 밝힐 것", "B"],
+    keywords_ko: ["관람객 질문에서 이 전시물을 찾을 때 쓰는 국문 검색어입니다.", "떡, 문양, 절기", "B"],
+    pronunciation_notes: ["챗봇 답변 음성이 읽는 법을 맞추기 위한 발음 주석입니다.", "떡살 [떡쌀]", "B"]
+  };
+  var USE = { V: ["info", "관람객 화면", "smartphone"], B: ["info", "챗봇 답변·검색", "message-square-text"], M: ["outline", "관리용(서비스 비노출)", "lock"] };
+  // 라벨 옆 정보 버튼과 설명 상자. 버튼을 누르면 열리고, 다시 누르거나 Esc·바깥 클릭으로 닫힌다
+  function infoTip(key, id, label) {
+    var d = INFO[key]; if (!d) return { btn: "", box: "" };
+    var tid = "tip-" + id;
+    return {
+      btn: '<button class="ad-info" type="button" data-do="tip" aria-expanded="false" aria-controls="' + tid + '" aria-label="' + esc(label) + ' 설명">' + ic("info") + "</button>",
+      box: '<div class="ad-tip" id="' + tid + '" role="note" hidden><p class="ad-tip__def">' + esc(d[0]) + "</p>" + (d[1] ? '<p class="ad-tip__ex">예: ' + esc(d[1]) + "</p>" : "") + '<div class="ad-tip__use">쓰이는 곳 ' + d[2].split("").map(function (u) { return badge(USE[u][0], USE[u][1], USE[u][2]); }).join("") + "</div></div>"
+    };
+  }
   var SECTIONS = { LS01: "1부: 출생", LS02: "2부: 교육", LS03: "2부: 교육", LS04: "3부: 관직", LS05: "4부: 혼례", LS06: "4부: 혼례", LS07: "5부: 수연", LS08: "5부: 수연", LS09: "6부: 상례", LS10: "6부: 상례" };
   var FORM_OF = { "복식": "복식", "식생활": "생활용구", "주생활": "생활용구", "생업": "생활용구", "의례": "의례용구", "놀이": "생활용구", "문방": "학용품·교재" };
   function langKeyName(k) { return LANGS.filter(function (l) { return l.k === k; })[0].n; }
@@ -1051,13 +1134,13 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     var errKey = function (k) { return E[k] ? ' aria-invalid="true"' : ""; };
     var field = function (c, path, val, span) {
       var key = c[0], label = c[1], req = c[2], type = c[3] || "text", list = c[4], help = c[5], id = "f-" + path.replace(/\./g, "-");
-      var lab = '<label class="ad-label" for="' + id + '">' + label + (req ? '<span class="req">*</span>' : "") + "</label>", ctrl;
+      var tip = infoTip(key, id, label), lab = '<div class="ad-label-row"><label class="ad-label" for="' + id + '">' + label + (req ? '<span class="req">*</span>' : "") + "</label>" + tip.btn + "</div>" + tip.box, ctrl;
       if (type === "select") ctrl = select(id, label, list, val, "선택", ' data-bind="' + path + '"' + dis + errKey(key));
       else if (type === "area") ctrl = '<textarea class="ad-textarea" id="' + id + '" data-bind="' + path + '" rows="3"' + (ro ? " readonly" : "") + errKey(key) + ">" + esc(val) + "</textarea>";
       else ctrl = '<input class="ad-input' + (type === "mono" || type === "number" ? " mono" : "") + '" id="' + id + '" data-bind="' + path + '"' + (type === "number" ? ' inputmode="numeric"' : "") + ' value="' + esc(val) + '"' + (ro ? " readonly" : "") + errKey(key) + ">";
-      return '<div class="ad-field' + (span || type === "area" ? " span-2" : "") + '">' + lab + ctrl + (help ? '<span class="ad-help">' + help + "</span>" : "") + "</div>";
+      return '<div class="ad-field' + (tip.btn ? " ad-field--info" : "") + (span || type === "area" ? " span-2" : "") + '">' + lab + ctrl + (help ? '<span class="ad-help">' + help + "</span>" : "") + "</div>";
     };
-    var roField = function (label, val, help) { return '<div class="ad-field"><span class="ad-label">' + label + '</span><input class="ad-input mono" value="' + esc(val) + '" readonly aria-label="' + label + '">' + (help ? '<span class="ad-help">' + help + "</span>" : "") + "</div>"; };
+    var roField = function (label, val, help, key) { var tip = infoTip(key, "ro-" + key, label); return '<div class="ad-field' + (tip.btn ? " ad-field--info" : "") + '"><div class="ad-label-row"><span class="ad-label">' + label + "</span>" + tip.btn + "</div>" + tip.box + '<input class="ad-input mono" value="' + esc(val) + '" readonly aria-label="' + label + '">' + (help ? '<span class="ad-help">' + help + "</span>" : "") + "</div>"; };
     var group = function (title, inner) { return '<section class="ad-panel form-group"><div class="ad-panel__head"><h2>' + title + '</h2></div><div class="ad-panel__body"><div class="form-grid">' + inner + "</div></div></section>"; };
     var head = '<a class="back" href="#m03" data-nav="m03">' + ic("arrow-left") + "전시물 목록</a>" +
       '<div class="ad-pagehead"><div><h1>' + (isNew ? "전시물 신규등록" : esc(exName(x))) + '</h1><div class="meta-row"><span class="mono">' + x.id + (isNew ? " · 저장 시 생성" : "") + "</span>" + pubBadge(isNew ? "비공개" : byId(x.id).pub) + regBadge(isNew ? x : byId(x.id)) + visionBadge(x) + (ro ? badge("outline", "조회 전용", "lock") : "") + "</div></div>" +
@@ -1067,7 +1150,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       var relOut = x.rel.map(function (r, i) { var o = byId(r.id); return '<tr><td>' + esc(o ? exName(o) : r.id) + ' <span class="mono muted">' + r.id + "</span></td><td>" + (ro ? esc(r.type) : select("f-rel-type-" + i, "관계 유형", REL_TYPES, r.type, "선택", ' data-bind="rel.' + i + '.type"')) + "</td><td>" + (ro ? esc(r.desc) : '<input class="ad-input" data-bind="rel.' + i + '.desc" aria-label="관계 근거·설명" value="' + esc(r.desc) + '"' + (r.desc ? "" : ' aria-invalid="true"') + ">") + "</td><td class=\"num\">" + (ro ? "" : '<button class="ad-btn ad-btn--ghost ad-btn--icon" type="button" aria-label="연결 해제" data-do="m04relDel" data-arg="' + i + '">' + ic("x") + "</button>") + "</td></tr>"; }).join("");
       var relRev = isNew ? [] : relIn(x.id), relRevRows = relRev.map(function (r) { var o = byId(r.id); return '<tr class="muted-row"><td>' + esc(exName(o)) + ' <span class="mono muted">' + r.id + "</span></td><td>" + esc(r.type) + "</td><td>" + esc(r.desc) + '</td><td class="num"><span class="ad-help">' + o.id + "에서 입력</span></td></tr>"; }).join("");
       var relAdd = ro ? "" : '<div class="rel-add">' + select("f-rel", "관련 전시물 추가", DB.filter(function (r) { return r.id !== x.id; }).map(function (r) { return { v: r.id, n: exName(r) + " · " + r.id }; }), "", "관련 전시물 추가") + "</div>";
-      body = F_BASIC.map(function (g) { return group(g[0], (g[0] === "식별" ? roField("전시물 ID", x.id, isNew ? "저장할 때 다음 번호로 생성되며 이후 바꿀 수 없습니다." : "시스템이 부여하며 바꿀 수 없습니다.") : "") + g[1].map(function (c) { return field(c, "f." + c[0], x.f[c[0]]); }).join("")); }).join("") +
+      body = F_BASIC.map(function (g) { return group(g[0], (g[0] === "식별" ? roField("전시물 ID", x.id, isNew ? "저장할 때 다음 번호로 생성되며 이후 바꿀 수 없습니다." : "시스템이 부여하며 바꿀 수 없습니다.", "exhibit_id") : "") + g[1].map(function (c) { return field(c, "f." + c[0], x.f[c[0]]); }).join("")); }).join("") +
         '<section class="ad-panel form-group"><div class="ad-panel__head"><div><h2>관련 전시물</h2><p>한쪽에만 입력해도 두 전시물 상세에 서로 표시됩니다. 혼동주의 관계는 관람객 목록에 표시하지 않습니다</p></div></div>' +
         ((relOut || relRevRows) ? '<div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>관련 전시물</th><th>관계 유형*</th><th>관계 근거·설명*</th><th class="num"></th></tr></thead><tbody>' + relOut + relRevRows + "</tbody></table></div>" : '<div class="ad-panel__body"><span class="muted">연결된 관련 전시물이 없습니다.</span></div>') + '<div class="ad-panel__body">' + relAdd + "</div></section>" +
         '<section class="ad-panel form-group"><div class="ad-panel__body"><span class="ad-label">비전AI 인식 대상</span><div>' + visionBadge(x) + '</div><span class="ad-help">조회 전용입니다. 비전AI 인식 대상은 구축 때 확정한 전시물이며, 이후 등록한 전시물은 QR·NFC·URL·번호검색·목록으로만 진입합니다.</span></div></section>';
@@ -1080,7 +1163,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       var ltabs = '<div class="ad-seg" role="tablist" aria-label="해설 언어">' + LANGS.map(function (l) { var d = langDone(isNew ? x : byId(x.id), l.k); return '<button type="button" class="ad-langtab" role="tab" aria-selected="' + (S.lang === l.k) + '" data-do="m04lang" data-arg="' + l.k + '">' + ic(d ? "circle-check" : "circle-dashed", d ? "done" : "todo") + l.n + "</button>"; }).join("") + "</div>";
       var lp = "i18n." + S.lang + ".";
       body = ltabs + '<div class="ad-notice">' + ic("info") + "<span>저장하면 이 언어의 해설은 승인된 것으로 기록되고 관람객 화면에 바로 반영됩니다. 챗봇 답변에는 재색인 후 반영됩니다.</span></div>" +
-        group(langKeyName(S.lang) + " 해설", (isKo ? roField("명칭(국문)", x.f.title_ko, "기본정보 탭에서 입력합니다.") : field(["title", "명칭", 1], lp + "title", L.title)) + field(["translit", "음역(로마자·カナ)", 0], lp + "translit", L.translit) +
+        group(langKeyName(S.lang) + " 해설", (isKo ? roField("명칭(국문)", x.f.title_ko, "기본정보 탭에서 입력합니다.", "title_ko") : field(["title", "명칭", 1], lp + "title", L.title)) + field(["translit", "음역(로마자·カナ)", 0], lp + "translit", L.translit) +
           field(["short", "핵심요약", 0, "area"], lp + "short", L.short) + field(["full", "기본 문화해설", 1, "area", null, "관람객 전시물 상세에 표시되는 해설입니다."], lp + "full", L.full) +
           field(["easy", "쉬운 해설(어린이)", isKo ? 1 : 0, "area", null, isKo ? "" : "없으면 챗봇이 같은 언어의 기본 문화해설을 씁니다."], lp + "easy", L.easy) + field(["expert", "전문가 해설", isKo ? 1 : 0, "area", null, isKo ? "" : "없으면 같은 언어의 기본 문화해설을 씁니다."], lp + "expert", L.expert) +
           field(["followups", "후속 질문", 0, "area", null, "한 줄에 하나씩 입력합니다. 3개를 권장합니다. 챗봇 답변 아래에 버튼으로 표시됩니다."], lp + "followups", L.followups));
@@ -1107,7 +1190,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
         '<section class="ad-panel"><div class="ad-panel__head"><h2>RAG 상태</h2>' + ragBadge(isNew && !S.justCreated ? "미색인" : RAG.status) + '</div><div class="ad-panel__body stack"><dl class="ad-dl"><dt>현재 상태</dt><dd>' + (isNew && !S.justCreated ? "미색인" : RAG.status) + '</dd><dt>최근 색인</dt><dd class="mono">' + dt(RAG.lastOk) + "</dd><dt>최근 결과</dt><dd>" + RAG.lastResult + "</dd></dl>" +
         '<div class="ad-notice' + (RAG.status === "재색인 필요" ? " ad-notice--warning" : "") + '">' + ic(RAG.status === "재색인 필요" ? "triangle-alert" : "info") + "<span>" + (RAG.status === "재색인 필요" ? "저장한 내용이 챗봇 답변에 반영되려면 재색인을 실행해야 합니다. 재색인 전까지 챗봇은 이전에 색인한 내용으로 답합니다." : RAG.status === "색인 중" ? "전체 재색인이 진행 중입니다. 끝나면 상태가 최신 또는 실패로 바뀝니다." : "재색인은 전체 RAG 데이터를 대상으로 실행합니다. 자동으로 실행되지 않습니다.") + "</span></div>" +
         (ro ? "" : '<div><button class="ad-btn ad-btn--primary" type="button" data-do="m04reindex"' + (ragOn && !isNew ? "" : " disabled") + ">" + ic("database") + '재색인 실행</button><button class="ad-btn ad-btn--ghost ad-btn--sm" type="button" data-do="busyDemo" aria-pressed="' + !!state.busyDemo + '">' + ic("flask-conical") + (state.busyDemo ? "거부 예시 끄기" : "실행 중 거부 예시") + '</button><span class="ad-help btn-help">' + (isNew ? "신규 전시물은 먼저 저장해야 합니다." : RAG.status === "최신" ? "상태가 최신이라 실행할 필요가 없습니다." : RAG.status === "색인 중" ? "색인이 끝날 때까지 다시 실행할 수 없습니다." : "") + "</span></div>") + "</div></section></div>" +
-        group("챗봇 보조", F_BOT.map(function (c) { return field([c[0], c[1], 0, "area", null, "한 줄에 하나씩 입력합니다. " + c[2]], "f." + c[0], x.f[c[0]]); }).join("")) +
+        group("챗봇 보조", F_BOT.map(function (c) { return field([c[0], c[1], 0, "area", null, "한 줄에 하나씩 입력합니다."], "f." + c[0], x.f[c[0]]); }).join("")) +
         group("공동활용플랫폼(조회)", PLATFORM.map(function (p) { return roField(p[1], x.f[p[0]] || "—"); }).join("")) + '<p class="ad-help">공동활용플랫폼 값은 연계 방식이 정해지기 전이라 조회만 합니다.</p>';
     }
     var errBox = S.errList && S.errList.length ? '<div class="ad-notice ad-notice--danger" role="alert">' + ic("circle-x") + "<span><strong>저장하지 못했습니다.</strong> 필수 항목을 모두 채워야 저장됩니다: " + S.errList.map(function (e) { return esc(e.label) + "(" + M04_TABS.filter(function (t) { return t[0] === e.tab; })[0][1] + ")"; }).join(", ") + "</span></div>" : "";
@@ -1120,6 +1203,8 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   DO.m04relDel = function (i) { state.m04.draft.rel.splice(+i, 1); state.m04.dirty = true; render(); };
   DO.m04imgSet = function () { var d = state.m04.draft; d.media.image = { file: (d.f.title_ko || "전시물") + "_대표.jpg", size: "2.4MB" }; state.m04.dirty = true; render(); };
   DO.m04audSet = function (k) { var d = state.m04.draft, A = d.media.audio[k]; A.file = (d.f.title_ko || "전시물") + "_해설_" + k + ".mp3"; A.scriptChanged = false; state.m04.dirty = true; render(); };
+  function closeTips(except) { Array.prototype.forEach.call(document.querySelectorAll('.ad-info[aria-expanded="true"]'), function (b) { if (b === except) return; b.setAttribute("aria-expanded", "false"); var t = document.getElementById(b.getAttribute("aria-controls")); if (t) t.hidden = true; }); }
+  DO.tip = function (a, el) { var open = el.getAttribute("aria-expanded") === "true", t = document.getElementById(el.getAttribute("aria-controls")); closeTips(el); el.setAttribute("aria-expanded", String(!open)); if (t) t.hidden = open; };
   DO.m04share = function () { var A = state.m04.draft.media.audio.zht; A.share = !A.share; state.m04.dirty = true; render(); };
   DO.m04pub = function (p) { var S = state.m04; S.pubChoice = p; S.pubError = p === "공개" && !publishable(S.mode === "new" ? S.draft : byId(S.id)).ok; if (S.pubError) S.pubChoice = isPub(S); else S.dirty = true; render(); };
   function isPub(S) { return S.mode === "new" ? "비공개" : byId(S.id).pub; }
@@ -1462,6 +1547,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   function closeDrawer() { state.drawer = null; render(); if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus(); }
 
   document.addEventListener("click", function (ev) {
+    if (!ev.target.closest(".ad-info,.ad-tip")) closeTips();
     var dd = ev.target.closest("[data-do]");
     if (dd && !dd.disabled) { ev.preventDefault(); DO[dd.dataset.do](dd.dataset.arg, dd, ev); return; }
     var t = ev.target.closest("[data-role],[data-nav],[data-period],[data-act],[data-page],[data-exhibit],[data-svc],[data-err],a[href^='#']");
@@ -1500,6 +1586,8 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     if (ev.target.id === "m09-type") { state.m09type = ev.target.value; state.m09page = 1; render(); }
   });
   document.addEventListener("keydown", function (ev) {
+    var openTip = document.querySelector('.ad-info[aria-expanded="true"]');
+    if (ev.key === "Escape" && openTip) { closeTips(); openTip.focus(); return; }
     if (ev.key === "Escape" && state.modal) { state.modal = null; render(); return; }
     if (ev.key === "Escape" && state.drawer) closeDrawer();
     if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches("tr.is-link")) { ev.preventDefault(); ev.target.click(); }
