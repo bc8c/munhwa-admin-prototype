@@ -845,6 +845,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     ["R70","LS08","의원·약방 치료","",""],["R71","LS08","민간요법","",""],["R72","LS08","굿(무속 의례)·무구","",""],["R73","LS08","벽사·부적","",""],
     ["R80","LS09","임종~성복(초종·습·염·성복)","","R81"],["R81","LS09","발인·운구(행상)","R80","R82"],["R82","LS09","치장·급묘(묘지 선정·매장)","R81","R83"],["R83","LS09","부장·출토(부장품·출토복식)","R82","R84"],["R84","LS09","우제~탈상","R83","R90"],
     ["R90","LS10","사당·신주 봉안","R84","R91"],["R91","LS10","기제사·차례","R90",""],["R92","LS10","불천위 제사","R90",""]];
+  // 생애국면은 생애국면-의례단계 매핑(life_stage_ritual_map)으로 정한다. 선행·후속은 통제어 원본의 의례 절차 순서
   var RIT = {}; RITUAL_V.forEach(function (r) { RIT[r[0]] = r; });
   // 생애국면별로 묶은 선택 목록(값: 코드 또는 명칭)
   var ritualSelect = function (id, label, v, byName, extra) {
@@ -862,10 +863,10 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
   var F_BASIC = [
     ["식별", [["guide_no", "해설 번호", 1, "number", null, "번호검색에 쓰는 번호입니다. 양의 정수이며 다른 전시물과 겹칠 수 없습니다."]]],
     ["소장·위치", [["accession_no", "소장품번호", 1, "mono"], ["section", "전시부", 1, "text", null, "예: 1부: 출생"], ["location_detail", "세부 위치(진열장·구역)", 1]]],
-    ["분류", [["life_stage", "생애국면", 1, "select", LIFE], ["object_nature", "전시물 성격", 1, "select", NATURE], ["object_form", "형태 분류", 1, "select", FORM], ["display_status", "전시 상태", 1, "select", DISPLAY, "값 목록은 확정 전 예시입니다."]]],
+    ["분류", [["ritual_stage_code", "의례단계", 1, "ritual", null, "고르면 생애국면이 정해지고, 문화 맥락 탭의 선행·후속 단계가 채워집니다."], ["life_stage", "생애국면", 0, "derived", LIFE, "의례단계에 따라 자동으로 정해집니다."], ["object_nature", "전시물 성격", 1, "select", NATURE], ["object_form", "형태 분류", 1, "select", FORM], ["display_status", "전시 상태", 1, "select", DISPLAY, "값 목록은 확정 전 예시입니다."]]],
     ["명칭·기본", [["title_ko", "명칭(국문)", 1, "text", null, "다국어 해설 국문 탭의 명칭과 같은 값입니다."], ["title_hanja", "한자명", 0], ["title_alias_ko", "이칭·별칭", 1], ["period_label", "시대", 1, "select", PERIOD], ["date_display", "연대 표기", 1], ["date_start", "시작 연도(숫자)", 0, "year", null, "숫자만 입력할 수 있습니다. 확인된 연도만 입력합니다."], ["date_precision", "연도 정밀도", 0, "select", PRECISION, "시작 연도를 입력하면 필수입니다."], ["creator", "제작자·작가", 0], ["country", "국가", 0], ["region", "지역", 0], ["material_raw", "재질(원문)", 1], ["dimensions_raw", "크기(원문)", 1], ["dimensions_std", "크기(표준)", 1, "text", null, "단위 포함. 예: 길이 24.5cm, 지름 6.2cm"], ["donor", "기증·수집", 0], ["designation", "지정 현황", 0], ["usage", "용도", 1], ["user_subject", "사용주체", 0]]]
   ];
-  var F_CONTEXT = [["ritual_stage_code", "의례단계", 0, "ritual", null, "명칭으로 고르면 의례단계 코드와 명칭이 함께 저장되고, 기본정보의 생애국면도 통제어에 맞춰 선택됩니다."], ["ritual_prev", "선행 단계", 0, "ritualName", null, "의례단계를 고르면 통제어의 선행 단계가 채워집니다. 바꿀 수 있습니다."], ["ritual_next", "후속 단계", 0, "ritualName", null, "의례단계를 고르면 통제어의 후속 단계가 채워집니다. 바꿀 수 있습니다."], ["usage_method", "사용방법", 0, "area"], ["historical_background", "시대배경", 0, "area"], ["cultural_meaning", "문화적 의미", 0, "area"], ["viewing_points", "감상 포인트", 0, "area"], ["disambiguation", "혼동 주의", 0, "area"], ["misconceptions", "오해 포인트", 0, "area"]];
+  var F_CONTEXT = [["ritual_prev", "선행 단계", 0, "ritualName", null, "기본정보의 의례단계를 고르면 선행 단계가 채워집니다. 바꿀 수 있습니다."], ["ritual_next", "후속 단계", 0, "ritualName", null, "기본정보의 의례단계를 고르면 후속 단계가 채워집니다. 바꿀 수 있습니다."], ["usage_method", "사용방법", 0, "area"], ["historical_background", "시대배경", 0, "area"], ["cultural_meaning", "문화적 의미", 0, "area"], ["viewing_points", "감상 포인트", 0, "area"], ["disambiguation", "혼동 주의", 0, "area"], ["misconceptions", "오해 포인트", 0, "area"]];
   var F_RIGHTS = [["copyright", "저작권(해설문)", 1], ["attribution", "출처표시 문구", 1], ["source_display", "관람객 표시 출처", 1], ["source_id", "출처 식별자", 0, "mono"], ["usage_ml", "이용범위-AI학습", 1, "text", null, "정해진 값 없이 이용 가능한 범위를 문장으로 적습니다."], ["usage_service", "이용범위-서비스 노출", 1, "text", null, "정해진 값 없이 이용 가능한 범위를 문장으로 적습니다."], ["usage_open", "이용범위-대외 개방", 1, "text", null, "정해진 값 없이 이용 가능한 범위를 문장으로 적습니다."]];
   var F_BOT = [["guardrails", "답변 시 주의", "주의사항 추가"], ["keywords_ko", "검색어", "검색어 추가"], ["pronunciation_notes", "발음 표기", "발음 표기 추가"]];
   // 필드 설명(토글팁): [뜻, 예시, 쓰이는 곳]. 쓰이는 곳 V=관람객 화면, B=챗봇 답변·검색, M=관리용(서비스 비노출). 뜻은 RAG 데이터셋 스키마 필드 설명을 관리자용으로 다듬은 것
@@ -875,7 +876,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     accession_no: ["박물관이 소장품에 붙인 관리번호입니다.", "", "M"],
     section: ["전시관 안의 전시부입니다. 해설문 부제목 형식 그대로 씁니다.", "1부: 출생", "B"],
     location_detail: ["전시부 안의 진열장이나 구역입니다.", "", "B"],
-    life_stage: ["전시물이 한국인의 일생에서 어느 국면에 속하는지 정해진 목록에서 고릅니다.", "LS05 혼례", "VB"],
+    life_stage: ["전시물이 한국인의 일생에서 어느 국면에 속하는지 나타냅니다. 직접 고르지 않고, 고른 의례단계에 매핑된 생애국면으로 정해집니다.", "혼례", "VB"],
     object_nature: ["실물인지, 재현품·재현공간·사진자료인지 등 전시물의 성격입니다. 전시물 목록 필터에도 씁니다.", "실물(단일)", "B"],
     object_form: ["회화·복식·생활용구 등 전시물의 형태 분류입니다. 전시물 목록 필터에도 씁니다.", "복식", "B"],
     display_status: ["전시중·교체·철수 등 현재 전시 상태입니다. 관람객 공개 여부와는 별개이며, 공개는 공개·챗봇 반영 탭에서 정합니다.", "", "M"],
@@ -896,7 +897,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     designation: ["국가유산 지정 현황입니다. 비워 두면 미지정으로 봅니다.", "", "B"],
     usage: ["전시물을 무엇에 썼는지입니다.", "", "B"],
     user_subject: ["누가 썼는지(계층·집단)입니다. 확인된 값만 입력합니다.", "", "B"],
-    ritual_stage_code: ["의례 절차 중 이 전시물이 쓰이는 단계입니다. 생애국면별로 묶인 의례단계 명칭 목록에서 고릅니다.", "전안례(奠雁禮)", "B"],
+    ritual_stage_code: ["의례 절차 중 이 전시물이 쓰이는 단계입니다. 생애국면별로 묶인 의례단계 명칭 목록에서 고르면 생애국면과 선행·후속 단계가 함께 정해집니다.", "전안례(奠雁禮)", "B"],
     ritual_prev: ["이 단계 바로 앞에 오는 의례단계입니다. 챗봇이 '그 전에는 무엇을 하나요?' 같은 후속 질문에 답할 때 씁니다.", "신랑 행렬(신부집으로 향함)", "B"],
     ritual_next: ["이 단계 바로 다음에 오는 의례단계입니다. 챗봇이 '그다음에는 무엇을 하나요?' 같은 후속 질문에 답할 때 씁니다.", "교배례·합근례(대례)", "B"],
     usage_method: ["실제로 어떻게 사용했는지에 대한 설명입니다.", "", "B"],
@@ -950,7 +951,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
     f.object_nature = k === 13 ? "재현품" : "실물(단일)"; f.object_form = e[0] === "노리개" ? "장신구" : FORM_OF[e[1]]; f.display_status = "전시중";
     f.title_ko = e[0]; f.title_hanja = k === 0 ? "活衣" : ""; f.title_alias_ko = k === 0 ? "홍장삼" : e[0]; f.period_label = k % 3 ? "조선 후기" : "19세기"; f.date_display = k % 3 ? "조선 후기" : "19세기"; f.date_start = k % 3 ? "" : "1800"; f.date_precision = k % 3 ? "" : "연대";
     f.creator = ""; f.region = ""; f.material_raw = k === 0 ? "비단, 면" : "(예시) 나무"; f.dimensions_raw = "길 120, 폭 80"; f.dimensions_std = "길이 120cm, 폭 80cm"; f.donor = ""; f.designation = ""; f.usage = k === 0 ? "혼례 때 신부가 입는 대례복" : e[0] + "의 쓰임(예시)"; f.user_subject = "";
-    F_CONTEXT.forEach(function (c) { f[c[0]] = ""; }); if (k === 0) { f.ritual_stage_code = "R45"; f.ritual_stage_label = RIT.R45[2]; f.ritual_prev = RIT.R44[2]; f.ritual_next = RIT.R46[2]; f.cultural_meaning = "부부의 화합과 자손의 번창을 비는 문양을 수놓았습니다."; f.viewing_points = "앞뒤의 모란·연꽃·봉황 자수와 소매 끝 색동을 살펴보십시오."; }
+    F_CONTEXT.forEach(function (c) { f[c[0]] = ""; }); var r0 = k === 0 ? RIT.R45 : RITUAL_V.filter(function (r) { return r[1] === ls; })[0]; f.ritual_stage_code = r0[0]; f.ritual_stage_label = r0[2]; f.ritual_prev = r0[3] ? RIT[r0[3]][2] : ""; f.ritual_next = r0[4] ? RIT[r0[4]][2] : ""; f.life_stage = r0[1]; f.section = SECTIONS[r0[1]]; if (k === 0) { f.cultural_meaning = "부부의 화합과 자손의 번창을 비는 문양을 수놓았습니다."; f.viewing_points = "앞뒤의 모란·연꽃·봉황 자수와 소매 끝 색동을 살펴보십시오."; }
     f.source_id = ""; f.guardrails = k === 0 ? ["문양의 의미는 추정이라고 밝힐 것"] : []; f.keywords_ko = k === 0 ? ["혼례", "예복", "자수"] : []; f.pronunciation_notes = [];
     PLATFORM.forEach(function (p) { f[p[0]] = p[0] === "identifier" ? "NFM-" + String(k + 1).padStart(4, "0") : p[0] === "class_code" ? "C" + String(100 + k) : "(위프코 적재값)"; });
     LANGS.forEach(function (l) {
@@ -1161,6 +1162,7 @@ label.ad-drop:focus-within { outline: 2px solid var(--focus); outline-offset: 2p
       var tip = infoTip(key, id, label), lab = '<div class="ad-label-row"><label class="ad-label" for="' + id + '">' + label + (req ? '<span class="req">*</span>' : "") + "</label>" + tip.btn + "</div>" + tip.box, ctrl;
       var max = c[6];
       if (type === "select") ctrl = select(id, label, list, val, "선택", ' data-bind="' + path + '"' + dis + errKey(key));
+      else if (type === "derived") { var dv = (list || []).filter(function (o) { return o.v === val; })[0]; ctrl = '<input class="ad-input" id="' + id + '" value="' + esc(dv ? dv.n : "") + '" placeholder="의례단계를 고르면 정해집니다" readonly>'; }
       else if (type === "ritual" || type === "ritualName") ctrl = ritualSelect(id, label, val, type === "ritualName", ' data-bind="' + path + '"' + dis + errKey(key));
       else if (type === "year") ctrl = '<input class="ad-input mono" id="' + id + '" data-bind="' + path + '" data-digits="4" inputmode="numeric" maxlength="4" value="' + esc(val) + '"' + (ro ? " readonly" : "") + errKey(key) + ">";
       else if (type === "area") ctrl = '<textarea class="ad-textarea" id="' + id + '" data-bind="' + path + '" rows="3"' + (ro ? " readonly" : "") + errKey(key) + ">" + esc(val) + "</textarea>";
